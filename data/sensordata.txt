@@ -1,0 +1,6 @@
+2017-09-17 13:03:20,237  	IndoorTemp:26	IndoorHumidity:53	IndoorPressure:1037
+2017-09-17 13:03:22,653  	IndoorTemp:19	IndoorHumidity:71	IndoorPressure:1011
+2017-09-17 13:03:26,621  	IndoorTemp:25	IndoorHumidity:52	IndoorPressure:1033
+2017-09-17 13:03:28,769  	IndoorTemp:26	IndoorHumidity:72	IndoorPressure:984
+2017-09-17 13:03:30,791  	IndoorTemp:23	IndoorHumidity:74	IndoorPressure:1013
+2017-09-17 13:03:32,798  	IndoorTemp:22	IndoorHumidity:62	IndoorPressure:1015
