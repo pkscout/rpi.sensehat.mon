@@ -1,2 +1,7 @@
-v.0.1.0
+v.0.0.2
+- removed wait at script execution
+- changed how the sensordata logs are named and rotated
+- still prototype only
+
+v.0.0.1
 - initial coding (prototype only)

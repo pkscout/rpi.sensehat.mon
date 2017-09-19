@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.0.0.1
+# *  v.0.0.2
 # *  original Read SenseHAT code by pkscout
 
 import atexit, os, random, time
@@ -9,6 +9,7 @@ from resources.common.fileops import readFile, writeFile, deleteFile
 
 p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
 lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ) )
+
 
 def _deletePID():
     success, loglines = deleteFile( pidfile )
@@ -29,8 +30,9 @@ class Main:
     def _init_vars( self ):
         self.SENSORDATA = Logger( logname = 'sensordata',
                                   format = '%(asctime)-15s %(message)s',
-                                  logfile = os.path.join( p_folderpath, 'data', 'sensordata.txt' ) )
-
+                                  logfile = os.path.join( p_folderpath, 'data', 'sensordata.log' ),
+                                  numbackups = 1 )
+        
 
     def _read_sensor( self ):
         temperature = str( random.randint( 19, 28 ) )
@@ -40,8 +42,6 @@ class Main:
 
 
     def _setPID( self ):
-        random.seed()
-        time.sleep( random.randint( 1, 3 ) )
         basetime = time.time()
         while os.path.isfile( pidfile ):
             time.sleep( random.randint( 1, 3 ) )
