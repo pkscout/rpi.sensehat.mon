@@ -29,16 +29,18 @@ class Main:
 
     def _init_vars( self ):
         self.SENSORDATA = Logger( logname = 'sensordata',
+                                  logconfig = 'timed',
                                   format = '%(asctime)-15s %(message)s',
-                                  logfile = os.path.join( p_folderpath, 'data', 'sensordata.log' ),
-                                  numbackups = 1 )
+                                  logfile = os.path.join( p_folderpath, 'data', 'sensordata.log' ) )
         
 
     def _read_sensor( self ):
         temperature = str( random.randint( 19, 28 ) )
         humidity = str( random.randint( 52, 75 ) )
         pressure = str( random.randint( 950, 1050 ) )
-        return '\tIndoorTemp:%s\tIndoorHumidity:%s\tIndoorPressure:%s' % (temperature, humidity, pressure)
+        datastr = '\tIndoorTemp:%s\tIndoorHumidity:%s\tIndoorPressure:%s' % (temperature, humidity, pressure)
+        lw.log( ['data from sensor: ' + datastr] )
+        return datastr
 
 
     def _setPID( self ):
