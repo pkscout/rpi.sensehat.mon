@@ -5,7 +5,7 @@
 
 import atexit, os, random, time
 from resources.common.xlogger import Logger
-from resources.common.fileops import readFile, writeFile, deleteFile
+from resources.common.fileops import writeFile, deleteFile
 
 p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
 lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ) )
