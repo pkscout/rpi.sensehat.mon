@@ -1,3 +1,9 @@
+v.0.0.3
+- added temperature adjustment logic if SenseHAT is too close to RPi CPU
+- set the script to loop and check sensor every 2 minutes (by default)
+- created option to override temp adjustment and change sensor interval in settings
+- still prototype only
+
 v.0.0.2
 - removed wait at script execution
 - changed how the sensordata logs are named and rotated

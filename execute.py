@@ -1,14 +1,29 @@
 # *  Credits:
 # *
-# *  v.0.0.2
+# *  v.0.0.3
 # *  original Read SenseHAT code by pkscout
 
-import atexit, os, random, time
+import atexit, os, random, subprocess, time
 from resources.common.xlogger import Logger
 from resources.common.fileops import writeFile, deleteFile
 
 p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
 lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ) )
+
+try:
+    import data.settings as settings
+except ImportError:
+    pass
+try:
+    ADJUSTTEMP = settings.adjusttemp
+except (AttributeError, NameError) as error:
+    lw.log( ['no setting found, using default ADJUSTTEMP = True'] )
+    ADJUSTTEMP = True
+try:
+    READINGDELTA = settngs.readingdelta
+except (AttributeError, NameError) as error:
+    lw.log( ['no setting found, using default READINGDELTA = 2'] )
+    READINGDELTA = 2
 
 
 def _deletePID():
@@ -24,7 +39,13 @@ class Main:
     def __init__( self ):
         self._setPID()
         self._init_vars()
-        self.SENSORDATA.log( [self._read_sensor()] )
+        try:
+            while True:
+                self.SENSORDATA.log( [self._read_sensor()] )
+                lw.log( ['waiting %s minutes before reading from sensor again' % str( READINGDELTA )] )
+                time.sleep( READINGDELTA*60 )
+        except KeyboardInterrupt:
+          pass
         
 
     def _init_vars( self ):
@@ -35,12 +56,27 @@ class Main:
         
 
     def _read_sensor( self ):
-        temperature = str( random.randint( 19, 28 ) )
-        humidity = str( random.randint( 52, 75 ) )
-        pressure = str( random.randint( 950, 1050 ) )
+        raw_temp = random.uniform( 19, 28 )
+        if ADJUSTTEMP:
+            # if the SenseHAT is too close to the RPi CPU, it reads hot. This corrects that
+            # see https://github.com/initialstate/wunderground-sensehat/wiki/Part-3.-Sense-HAT-Temperature-Correction
+            try:
+                cpu_temp_raw = subprocess.check_output( "vcgencmd measure_temp", shell=True )
+                cpu_temp = float( cpu_temp_raw.split( '=' )[1].split( "'" ) )
+            except subprocess.CalledProcessError:
+                cpu_temp = 0
+            temperature = self._reading_to_str( raw_temp - ((cpu_temp - raw_temp)/5.466) )
+        else:
+            temperature = self._reading_to_str( raw_temp )
+        humidity = self._reading_to_str( random.uniform( 52, 75 ) )
+        pressure = self._reading_to_str( random.uniform( 950, 1050 ) )
         datastr = '\tIndoorTemp:%s\tIndoorHumidity:%s\tIndoorPressure:%s' % (temperature, humidity, pressure)
-        lw.log( ['data from sensor: ' + datastr] )
+        lw.log( ['rounded data from sensor: ' + datastr] )
         return datastr
+
+
+    def _reading_to_str( self, reading ):
+        return str( int( round( reading ) ) )
 
 
     def _setPID( self ):
