@@ -3,7 +3,7 @@
 # *  v.0.0.3
 # *  original Read SenseHAT code by pkscout
 
-import atexit, os, random, subprocess, time
+import os, random, subprocess, time
 from resources.common.xlogger import Logger
 from resources.common.fileops import writeFile, deleteFile
 
@@ -12,32 +12,16 @@ lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ) )
 
 try:
     import data.settings as settings
-except ImportError:
-    pass
-try:
     ADJUSTTEMP = settings.adjusttemp
-except (AttributeError, NameError) as error:
-    lw.log( ['no setting found, using default ADJUSTTEMP = True'] )
-    ADJUSTTEMP = True
-try:
     READINGDELTA = settngs.readingdelta
-except (AttributeError, NameError) as error:
-    lw.log( ['no setting found, using default READINGDELTA = 2'] )
+except (ImportError, AttributeError, NameError) as error:
+    lw.log( ['no settings or incomplete settings found, using defaults'] )
+    ADJUSTTEMP = True
     READINGDELTA = 2
-
-
-def _deletePID():
-    success, loglines = deleteFile( pidfile )
-    lw.log (loglines )
-
-pid = str(os.getpid())
-pidfile = os.path.join( p_folderpath, 'data', 'read.pid' )
-atexit.register( _deletePID )
 
 
 class Main:
     def __init__( self ):
-        self._setPID()
         self._init_vars()
         try:
             while True:
@@ -77,19 +61,6 @@ class Main:
 
     def _reading_to_str( self, reading ):
         return str( int( round( reading ) ) )
-
-
-    def _setPID( self ):
-        basetime = time.time()
-        while os.path.isfile( pidfile ):
-            time.sleep( random.randint( 1, 3 ) )
-            if time.time() - basetime > 3:
-                err_str = 'taking too long for previous process to close - aborting attempt to read sensor'
-                lw.log( [err_str] )
-                sys.exit( err_str )
-        lw.log( ['setting PID file'] )
-        success, loglines = writeFile( pid, pidfile )
-        lw.log( loglines )        
 
 
 
