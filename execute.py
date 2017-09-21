@@ -1,11 +1,17 @@
 # *  Credits:
 # *
-# *  v.0.0.3
+# *  v.0.0.4
 # *  original Read SenseHAT code by pkscout
 
 import os, random, subprocess, time
+from threading import Thread
 from resources.common.xlogger import Logger
 from resources.common.fileops import writeFile, deleteFile
+try:
+    from resources.sensehatmonitor import ConvertJoystickToKeypress, MonitorSensors
+    SENSEHATACTIVE = True
+except ImportError:
+    SENSEHATACTIVE = False
 
 p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
 lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ) )
@@ -14,10 +20,12 @@ try:
     import data.settings as settings
     ADJUSTTEMP = settings.adjusttemp
     READINGDELTA = settngs.readingdelta
+    CONVERTJOYSTICK = settings.convertjoystick
 except (ImportError, AttributeError, NameError) as error:
     lw.log( ['no settings or incomplete settings found, using defaults'] )
     ADJUSTTEMP = True
     READINGDELTA = 2
+    CONVERTJOYSTICK = True
 
 
 class Main:
@@ -66,5 +74,11 @@ class Main:
 
 if ( __name__ == "__main__" ):
     lw.log( ['script started'], 'info' )
+    if CONVERTJOYSTICK and SENSEHATACTIVE:
+        #create and start a separate thread to monitor the joystick and convert to keyboard presses for Kodi
+        cj = ConvertJoystickToKeypress()
+        t1 = Thread( target=cj.Convert() )
+        t1.setDaemon( True )
+        t1.start()
     Main()
 lw.log( ['script finished'], 'info' )
