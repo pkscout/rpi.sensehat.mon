@@ -7,3 +7,7 @@ adjusttemp = True
 
 # amount of time between sensor readings (in minutes)
 readingdelta = 2
+
+# if True activates a thread to monitor the SenseHAT Joystick and convert those inputs
+# into key presses (useful to control Kodi using the Joystick)
+convertjoystick = True
