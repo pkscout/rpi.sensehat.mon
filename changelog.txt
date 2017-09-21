@@ -1,3 +1,7 @@
+v.0.0.4
+- added class to convert joystick inputs into keyboard presses
+- added class to monitor all sensors
+
 v.0.0.3
 - added temperature adjustment logic if SenseHAT is too close to RPi CPU
 - set the script to loop and check sensor every 2 minutes (by default)
