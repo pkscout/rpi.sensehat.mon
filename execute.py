@@ -3,29 +3,29 @@
 # *  v.0.0.5
 # *  original Read SenseHAT code by pkscout
 
-import os, subprocess, sys, time
-from datetime import datetime
+import os, random, subprocess, time
 from threading import Thread
 from resources.common.xlogger import Logger
-from resources.sensehatmonitor import ConvertJoystickToKeypress, MonitorSensors
+from resources.common.fileops import writeFile, deleteFile
+# from resources.sensehatmonitor import ConvertJoystickToKeypress, MonitorSensors
 
 p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
 lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ) )
 
 try:
     import data.settings as settings
-    settings.adjusttemp
-    settings.readingdelta
-    settings.convertjoystick
-    settings.reverselr
-    settings.keymap
-    settings.changescreen
-    settings.screenofftime
-    settings.screenontime
+    ADJUSTTEMP = settings.adjusttemp
+    READINGDELTA = settngs.readingdelta
+    CONVERTJOYSTICK = settings.convertjoystick
+    LOCALKEYMAP = settings.localkeymap
+    REVERSELR = settings.reverselr
 except (ImportError, AttributeError, NameError) as error:
-    err_str = 'incomplete or no settings file found at %s' % os.path.join ( p_folderpath, 'data', 'settings.py' )
-    lw.log( [err_str, 'script stopped'] )
-    sys.exit( err_str )
+    lw.log( ['no settings or incomplete settings found, using defaults'] )
+    ADJUSTTEMP = True
+    READINGDELTA = 2
+    CONVERTJOYSTICK = False
+    LOCALKEYMAP = {}
+    REVERSELR = True
 
 
 
@@ -35,15 +35,13 @@ class Main:
         try:
             while True:
                 self.SENSORDATA.log( [self._read_sensor()] )
-                self._screen_change()
-                lw.log( ['waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )
-                time.sleep( settings.readingdelta * 60 )
+                lw.log( ['waiting %s minutes before reading from sensor again' % str( READINGDELTA )] )
+                time.sleep( READINGDELTA*60 )
         except KeyboardInterrupt:
           pass
         
 
     def _init_vars( self ):
-        self.SENSOR = MonitorSensors()
         self.SENSORDATA = Logger( logname = 'sensordata',
                                   logconfig = 'timed',
                                   format = '%(asctime)-15s %(message)s',
@@ -51,8 +49,8 @@ class Main:
         
 
     def _read_sensor( self ):
-        raw_temp = self.SENSOR.get_temperature()
-        if settings.adjusttemp:
+        raw_temp = random.uniform( 19, 28 )
+        if ADJUSTTEMP:
             # if the SenseHAT is too close to the RPi CPU, it reads hot. This corrects that
             # see https://github.com/initialstate/wunderground-sensehat/wiki/Part-3.-Sense-HAT-Temperature-Correction
             try:
@@ -63,8 +61,8 @@ class Main:
             temperature = self._reading_to_str( raw_temp - ((cpu_temp - raw_temp)/5.466) )
         else:
             temperature = self._reading_to_str( raw_temp )
-        humidity = self._reading_to_str( self.SENSOR.get_humidity() )
-        pressure = self._reading_to_str( self.SENSOR.get_pressure() )
+        humidity = self._reading_to_str( random.uniform( 52, 75 ) )
+        pressure = self._reading_to_str( random.uniform( 950, 1050 ) )
         datastr = '\tIndoorTemp:%s\tIndoorHumidity:%s\tIndoorPressure:%s' % (temperature, humidity, pressure)
         lw.log( ['rounded data from sensor: ' + datastr] )
         return datastr
@@ -74,32 +72,12 @@ class Main:
         return str( int( round( reading ) ) )
 
 
-    def _screen_change( self ):
-       if settings.changescreen:
-            offtime = self._set_datetime( settings.screenofftime )
-            ontime = self._set_datetime( settings.screenontime )
-            rightnow = datetime.now()
-            offdiff = rightnow - offtime
-            ondiff = rightnow - ontime
-            if abs( offdiff.total_seconds() ) < settings.readingdelta * 30: # so +/- window is total readingdelta
-                lw.log( ['turning off screen'] )
-                rpi_backlight.set_power( False )
-            elif abs( ondiff.total_seconds() ) < settings.readingdelta * 30:
-                lw.log( ['turning on screen'] )
-                rpi_backlight.set_power( True )
-            
-
-    def _set_datetime( self, str_time ):
-        tc = str_time.split( ':' )
-        now = datetime.now()
-        return datetime(year=now.year, month=now.month, day=now.day, hour=int( tc[0] ), minute=int( tc[1] ) )
-
 
 if ( __name__ == "__main__" ):
     lw.log( ['script started'], 'info' )
-    if settings.convertjoystick:
-        #create and start a separate thread to monitor the joystick and convert to keyboard presses
-        cj = ConvertJoystickToKeypress( keymap=settings.keymap, reverselr=settings.reverselr )
+    if CONVERTJOYSTICK:
+        #create and start a separate thread to monitor the joystick and convert to keyboard presses for Kodi
+        cj = ConvertJoystickToKeypress( localkeymap=LOCALKEYMAP, reverselr=REVERSELR )
         t1 = Thread( target=cj.Convert() )
         t1.setDaemon( True )
         t1.start()
