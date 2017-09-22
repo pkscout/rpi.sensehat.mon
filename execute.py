@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.0.0.5
+# *  v.0.0.6
 # *  original Read SenseHAT code by pkscout
 
 import os, subprocess, sys, time
