@@ -1,17 +1,13 @@
 # *  Credits:
 # *
-# *  v.0.0.4
+# *  v.0.0.5
 # *  original Read SenseHAT code by pkscout
 
 import os, random, subprocess, time
 from threading import Thread
 from resources.common.xlogger import Logger
 from resources.common.fileops import writeFile, deleteFile
-try:
-    from resources.sensehatmonitor import ConvertJoystickToKeypress, MonitorSensors
-    SENSEHATACTIVE = True
-except ImportError:
-    SENSEHATACTIVE = False
+# from resources.sensehatmonitor import ConvertJoystickToKeypress, MonitorSensors
 
 p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
 lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ) )
@@ -21,11 +17,16 @@ try:
     ADJUSTTEMP = settings.adjusttemp
     READINGDELTA = settngs.readingdelta
     CONVERTJOYSTICK = settings.convertjoystick
+    LOCALKEYMAP = settings.localkeymap
+    REVERSELR = settings.reverselr
 except (ImportError, AttributeError, NameError) as error:
     lw.log( ['no settings or incomplete settings found, using defaults'] )
     ADJUSTTEMP = True
     READINGDELTA = 2
-    CONVERTJOYSTICK = True
+    CONVERTJOYSTICK = False
+    LOCALKEYMAP = {}
+    REVERSELR = True
+
 
 
 class Main:
@@ -74,9 +75,9 @@ class Main:
 
 if ( __name__ == "__main__" ):
     lw.log( ['script started'], 'info' )
-    if CONVERTJOYSTICK and SENSEHATACTIVE:
+    if CONVERTJOYSTICK:
         #create and start a separate thread to monitor the joystick and convert to keyboard presses for Kodi
-        cj = ConvertJoystickToKeypress()
+        cj = ConvertJoystickToKeypress( localkeymap=LOCALKEYMAP, reverselr=REVERSELR )
         t1 = Thread( target=cj.Convert() )
         t1.setDaemon( True )
         t1.start()
