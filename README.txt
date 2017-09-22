@@ -42,7 +42,7 @@ Running from the terminal is useful during initial testing.  Once you know it's 
 2. update rc.d
 		sudo update-rc.d rpi.sensehat.mon
 		
-When you restart rpi.sensehat.mon will automatically start.  If you need to start or stop the script manually, you can do that with:
+When you restart the Pi, rpi.sensehat.mon will automatically start.  If you need to start or stop the script manually, you can do that with:
 
 		sudo service rpi.sensehat.mon start
 or		sudo service rpi.sensehat.mon stop
