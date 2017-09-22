@@ -1,13 +1,14 @@
-# if you want to override the default settings, rename this to settings.py
-# all the settings listed below are the defaults
-# all preferences must be present or none will be overridden
-
 # boolean determining if you want to have the script adjust the temp returned
 # to account for the temp of the RPi CPU
 adjusttemp = True
 
 # amount of time between sensor readings (in minutes)
 readingdelta = 2
+
+# time to turn the screen off and on (hh:mm, 24 hour format)
+changescreen = True
+screenofftime = '22:00'
+screenontime = '5:00'
 
 # if True activates a thread to monitor the SenseHAT Joystick and convert those inputs
 # into key presses (useful to control Kodi using the Joystick)
@@ -19,11 +20,11 @@ reverselr = True
 
 # the keymap for regular and long holds of the SenseHAT Joystick
 # the first item in the array is for single action, the second is for held action
-localkeymap = {'up': ['up', 'brightness'],
-               'down': ['down', 'c'],
-               'left': ['left', 'screenoff'],
-               'right': ['right', 'screenon'],
-               'middle': ['return', 'esc']}
+keymap = {'up': ['up', 'brightness'],
+          'down': ['down', 'c'],
+          'left': ['left', 'screenoff'],
+          'right': ['right', 'screenon'],
+          'middle': ['return', 'esc']}
 
 # keys you can set in localkeymap
 # 'brightness', 'screenon', 'screenoff' <-- these control the RPi touchscreen if installed

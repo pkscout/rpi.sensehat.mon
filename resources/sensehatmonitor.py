@@ -26,20 +26,12 @@ class MonitorSensors:
 
 
 class ConvertJoystickToKeypress:
-    def __init__( self, localkeymap={}, reverselr=True ):
+    def __init__( self, keymap, reverselr ):
         self.DOWNACTION = 'pushed'
         self.BRIGHTNESSATOFF = rpi_backlight.get_actual_brightness()
         self.BDIRECTION = 1
         self.REVERSELR = reverselr
-        if localkeymap:
-            self.KEYMAP = localkeymap
-        else:
-            self.KEYMAP = {}
-            self.KEYMAP['up'] = ['up', 'brightness']
-            self.KEYMAP['down'] = ['down', 'c']
-            self.KEYMAP['left'] = ['left', 'screenoff']
-            self.KEYMAP['right'] = ['right', 'screenon']
-            self.KEYMAP['middle'] = ['return', 'esc']            
+        self.KEYMAP = keymap
 
 
     def Convert( self ):
@@ -54,8 +46,8 @@ class ConvertJoystickToKeypress:
             sense.stick.direction_left = self._pushed_left
             sense.stick.direction_right = self._pushed_right        
         signal.pause()
-        
-    
+
+
     def _adjust_brightness( self ):
         # only have one button for brightness, so this logic runs the brightness up to max
         # then back down to a minimum of 25 before going back up
