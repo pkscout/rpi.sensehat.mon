@@ -1,11 +1,18 @@
+v.0.0.6
+- settings.py now required and has all 'default' settings included
+- added option to turn RPi touchscreen off and on at given time each day
+- code complete but not fully tested with SenseHAT/RPi hardware yet
+
 v.0.0.5
 - added keymap options to control brightness and power of RPi touchscreen display
 - updated default keymap
 - updated settings example to include all options that can be overridden
+- still prototype only
 
 v.0.0.4
 - added class to convert joystick inputs into keyboard presses
 - added class to monitor all sensors
+- still prototype only
 
 v.0.0.3
 - added temperature adjustment logic if SenseHAT is too close to RPi CPU
