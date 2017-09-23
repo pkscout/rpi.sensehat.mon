@@ -1,18 +1,19 @@
 # boolean determining if you want to have the script adjust the temp returned
-# to account for the temp of the RPi CPU
+# to account for the temp of the RPi CPU.  You should really set this to False if the
+# SenseHAT is in a separate case and connected with a ribbon cable
 adjusttemp = True
 
 # amount of time between sensor readings (in minutes)
 readingdelta = 2
 
 # time to turn the screen off and on (hh:mm, 24 hour format)
-changescreen = True
+changescreen = False
 screenofftime = '22:00'
 screenontime = '5:00'
 
 # if True activates a thread to monitor the SenseHAT Joystick and convert those inputs
 # into key presses (useful to control Kodi using the Joystick)
-convertjoystick = True
+convertjoystick = False
 
 # if the SenseHAT is mounted in a case where the joystick is facing the back, you want
 # to reverse left and right actions so that it behaves the way you probably expect

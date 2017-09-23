@@ -3,8 +3,20 @@
 # *  v.0.0.1
 # *  original SenseHAT Monitor classes by pkscout
 
-import pyautogui, signal, rpi_backlight
+try:
+    import pyautogui
+    haspyautogui = True
+except ImportError:
+    haspyautogui = False
+try:    
+    import rpi_backlight
+    hasbacklight = True
+except ImportError:
+    hasbacklight = False
+    
+import signal
 from sense_hat import SenseHat, ACTION_PRESSED, ACTION_HELD, ACTION_RELEASED
+
 
 
 class MonitorSensors:
@@ -28,7 +40,7 @@ class MonitorSensors:
 class ConvertJoystickToKeypress:
     def __init__( self, keymap, reverselr ):
         self.DOWNACTION = 'pushed'
-        self.BRIGHTNESSATOFF = rpi_backlight.get_actual_brightness()
+#        self.BRIGHTNESSATOFF = rpi_backlight.get_actual_brightness()
         self.BDIRECTION = 1
         self.REVERSELR = reverselr
         self.KEYMAP = keymap
@@ -61,15 +73,15 @@ class ConvertJoystickToKeypress:
 
 
     def _do_action_for( self, thekey ):
-        if thekey == 'screenon':
+        if thekey == 'screenon' and hasbacklight:
             rpi_backlight.set_power( True )
-            rpi_backlight.set_brightness( self.BRIGHTNESSATOFF, smooth=True, duration=3 )
-        elif thekey == 'screenoff':
-            self.BRIGHTNESSATOFF = rpi_backlight.get_actual_brightness()
+#            rpi_backlight.set_brightness( self.BRIGHTNESSATOFF, smooth=True, duration=3 )
+        elif thekey == 'screenoff' and hasbacklight:
+#            self.BRIGHTNESSATOFF = rpi_backlight.get_actual_brightness()
             rpi_backlight.set_power( False )
-        elif thekey == 'brightness':
+        elif thekey == 'brightness' and hasbacklight:
             self._adjust_brightness()
-        else:
+        elif haspyautogui:
             pyautogui.press( thekey )
 
 

@@ -13,26 +13,30 @@ Prerequisites:
 
 2. You should use Python 2.7.x for this. (3.4.x might work, but I haven't tested it).
 
-3. You need to add the PyAutoGUI module and its associated dependencies to your python install.  This is the module that does the key presses. (these instructions are for Python 2.7.x. If you're using Python 3.4.x, then use pip3, python3-tk, and python3-dev)
+3. If you want to use the SenseHAT joystick to control Kodi, you need to add the PyAutoGUI module and its associated dependencies to your python install. (these instructions are for Python 2.7.x. If you're using Python 3.4.x, then use pip3 and python3-dev)
 From a terminal window:	pip install python-xlib
-						sudo apt-get install scrot
-						sudo apt-get install python-tk
 						sudo apt-get install python-dev
 						pip install pyautogui
 
-4. PLACEHOLDER IN CASE THERE ARE OTHER MODULES TO INSTALL
+4. If you are using the official RPi 7" touchscreen and want to be able to control the on/off and brightness of the display, you need to add the rpi backlight module.  As per the github repo for this module, you may also need to edit the backlight rules.
+From a terminal window:	pip install rpi-backlight
+						sudo nano /etc/udev/rules.d/backlight-permissions.rules
+and add: SUBSYSTEM=="backlight",RUN+="/bin/chmod 666 /sys/class/backlight/%k/brightness /sys/class/backlight/%k/bl_power"
+
 
 Installation:
-It is recommended you install this in /home/pi.  If you install this anywhere else, you will need to modify the DIR line in the rpi.sensehat.mon file.
+It is recommended you install this in /home/pi.  If you install this anywhere else, you will need to modify the DIR line in the rpi.sensehat.mon file used later in the instructions.
 
 
 Configuration:
-In the data directory of the script there is a file called settings.py.  Review the settings file and make changes as needed.  If you're not sure what a setting does even after reading the comments in the settings.py file, you can probably leave it at the default.
+In the data directory of the script there is a file called settings-example.py. Rename it to settings.py, review it, and make changes as needed.  If you want to use the SenseHAT joystick to control Kodi and/or have the official Raspberry Pi 7" touchscreen, you definitely need to make some changes to enable those options.  If you're not sure what a setting does even after reading the comments in the settings.py file, you can probably leave it at the default.
 
 
 Usage:
 To run from the terminal: python /home/pi/rpi.sensehat.mon/execute.py
 To exit: CNTL-C
+
+If you are using the Joystick keyboard mapping, take a look at the settings.py file to see the default configuration.
 
 Running from the terminal is useful during initial testing.  Once you know it's working the way you want, you should set it to autostart.  To do that:
 

@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.0.0.6
+# *  v.0.0.7
 # *  original RPi SenseHAT Control code by pkscout
 
 import os, subprocess, sys, time
@@ -8,6 +8,12 @@ from datetime import datetime
 from threading import Thread
 from resources.common.xlogger import Logger
 from resources.sensehatmonitor import ConvertJoystickToKeypress, MonitorSensors
+try:
+    import rpi-backlight
+    hasbacklight = True
+except ImportError:
+    hasbacklight = False
+    
 
 p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
 lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ) )
@@ -75,7 +81,7 @@ class Main:
 
 
     def _screen_change( self ):
-       if settings.changescreen:
+       if settings.changescreen and hasbacklight:
             offtime = self._set_datetime( settings.screenofftime )
             ontime = self._set_datetime( settings.screenontime )
             rightnow = datetime.now()

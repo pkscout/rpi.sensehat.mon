@@ -1,3 +1,8 @@
+v.0.0.7
+- only including settings-example.py. Must rename to settings.py to use script.
+- made keyboard emulation and rpi-backlight control optional
+- updated readme with new instructions
+
 v.0.0.6
 - settings.py now required and has all 'default' settings included
 - added option to turn RPi touchscreen off and on at given time each day
