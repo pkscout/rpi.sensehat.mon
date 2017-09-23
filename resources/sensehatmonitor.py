@@ -8,15 +8,10 @@ try:
     haspyautogui = True
 except ImportError:
     haspyautogui = False
-try:    
-    import rpi_backlight
-    hasbacklight = True
-except ImportError:
-    hasbacklight = False
-    
+
 import signal
 from sense_hat import SenseHat, ACTION_PRESSED, ACTION_HELD, ACTION_RELEASED
-
+from screencontrol import RPiTouchscreen
 
 
 class MonitorSensors:
@@ -40,10 +35,9 @@ class MonitorSensors:
 class ConvertJoystickToKeypress:
     def __init__( self, keymap, reverselr ):
         self.DOWNACTION = 'pushed'
-#        self.BRIGHTNESSATOFF = rpi_backlight.get_actual_brightness()
-        self.BDIRECTION = 1
         self.REVERSELR = reverselr
         self.KEYMAP = keymap
+        self.rpit = RPiTouchscreen()
 
 
     def Convert( self ):
@@ -60,27 +54,13 @@ class ConvertJoystickToKeypress:
         signal.pause()
 
 
-    def _adjust_brightness( self ):
-        # only have one button for brightness, so this logic runs the brightness up to max
-        # then back down to a minimum of 25 before going back up
-        current = rpi_backlight.get_actual_brightness()
-        current = current - (current % 25)
-        if current == 250:
-            self.BDIRECTION = -1
-        elif current == 25:
-            self.BDIRECTION = 1
-        rpi_backlight.set_brightness( current + self.BDIRECTION*25, smooth=True, duration=1 )
-
-
     def _do_action_for( self, thekey ):
-        if thekey == 'screenon' and hasbacklight:
-            rpi_backlight.set_power( True )
-#            rpi_backlight.set_brightness( self.BRIGHTNESSATOFF, smooth=True, duration=3 )
-        elif thekey == 'screenoff' and hasbacklight:
-#            self.BRIGHTNESSATOFF = rpi_backlight.get_actual_brightness()
-            rpi_backlight.set_power( False )
-        elif thekey == 'brightness' and hasbacklight:
-            self._adjust_brightness()
+        if thekey == 'screenon':
+            self.rpit.Power( switch='on' )
+        elif thekey == 'screenoff'::
+            self.rpit.Power( switch='off' )
+        elif thekey == 'brightness':
+            self.rpit.AdjustBrightness()
         elif haspyautogui:
             pyautogui.press( thekey )
 
