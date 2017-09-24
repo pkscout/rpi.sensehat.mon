@@ -1,5 +1,9 @@
+v.0.0.8
+- added command line tool to change RPiTouchscreen state (useful for advanced Cron jobs)
+- added logic so script at least runs even without RPi specific libraries
+
 v.0.0.7
-- only including settings-example.py. Must rename to settings.py to use script.
+- only including settings-example.py. Must rename to settings.py to use script
 - made keyboard emulation and rpi-backlight control optional
 - updated readme with new instructions
 

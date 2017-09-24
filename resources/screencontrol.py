@@ -30,7 +30,7 @@ class RPiTouchscreen:
         rpi_backlight.set_brightness( current + (self.BDIRECTION * step), smooth=smooth, duration=duration )
 
 
-    def BrightnessDown( self, step=25, smooth=True, duration=1 )
+    def BrightnessDown( self, step=25, smooth=True, duration=1 ):
         if has_rpi_backlight:
             current = rpi_backlight.get_actual_brightness()
             current = current - (current % step)
@@ -39,7 +39,7 @@ class RPiTouchscreen:
                 self.AdjustBrightness( step=step, smooth=smooth, duration=duration )
             
             
-    def BrightnessUp( self, self, step=25, smooth=True, duration=1 )    
+    def BrightnessUp( self, step=25, smooth=True, duration=1 ):    
         if has_rpi_backlight:
             current = rpi_backlight.get_actual_brightness()
             current = current - (current % step)
@@ -56,3 +56,12 @@ class RPiTouchscreen:
             rpi_backlight.set_brightness( brightness, smooth=True, duration=3 )
         if switch == 'off' and has_rpi_backlight:
             rpi_backlight.set_power( False )
+    
+    
+    def SetBrightness( self, brightness=255, smooth=True, duration=3 ):
+        if has_rpi_backlight:
+            if brightness > 255:
+                brightness = 255
+            elif brightness < 10:
+                brightness = 10
+            rpi_backlight.set_brightness( brightness, smooth=smooth, duration=duration )

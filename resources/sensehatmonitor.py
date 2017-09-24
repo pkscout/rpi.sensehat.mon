@@ -8,27 +8,44 @@ try:
     haspyautogui = True
 except ImportError:
     haspyautogui = False
-
+try:
+    from sense_hat import SenseHat, ACTION_PRESSED, ACTION_HELD, ACTION_RELEASED
+    hassensehat = True
+except ImportError:
+#    from random import randint
+    hassensehat = False
 import signal
-from sense_hat import SenseHat, ACTION_PRESSED, ACTION_HELD, ACTION_RELEASED
 from screencontrol import RPiTouchscreen
 
 
 class MonitorSensors:
     def __init__( self ):
-        self.SENSE = SenseHat()
+        if hassensehat:
+            self.SENSE = SenseHat()
 
     
     def get_humidity( self ):
-        return self.SENSE.get_humidity()
+        if hassensehat:
+            return self.SENSE.get_humidity()
+        else:
+#            return randint( 43, 68 )
+            return 0
 
         
     def get_temperature( self ):
-        return self.SENSE.get_temperature()
+        if hassensehat:
+            return self.SENSE.get_temperature()
+        else:
+#            return randint( 21, 28 )
+            return 0
 
         
     def get_pressure( self ):
-        return self.SENSE.get_pressure()
+        if hassensehat:
+            return self.SENSE.get_pressure()
+        else:
+#            return randint( 990, 1020 )
+            return 0
 
 
 
@@ -41,23 +58,24 @@ class ConvertJoystickToKeypress:
 
 
     def Convert( self ):
-        sense = SenseHat()
-        sense.stick.direction_up = self._pushed_up
-        sense.stick.direction_down = self._pushed_down
-        sense.stick.direction_middle = self._pushed_middle
-        if self.REVERSELR:
-            sense.stick.direction_left = self._pushed_right
-            sense.stick.direction_right = self._pushed_left
-        else:
-            sense.stick.direction_left = self._pushed_left
-            sense.stick.direction_right = self._pushed_right        
-        signal.pause()
+        if hassensehat:
+            sense = SenseHat()
+            sense.stick.direction_up = self._pushed_up
+            sense.stick.direction_down = self._pushed_down
+            sense.stick.direction_middle = self._pushed_middle
+            if self.REVERSELR:
+                sense.stick.direction_left = self._pushed_right
+                sense.stick.direction_right = self._pushed_left
+            else:
+                sense.stick.direction_left = self._pushed_left
+                sense.stick.direction_right = self._pushed_right        
+            signal.pause()
 
 
     def _do_action_for( self, thekey ):
         if thekey == 'screenon':
             self.rpit.Power( switch='on' )
-        elif thekey == 'screenoff'::
+        elif thekey == 'screenoff':
             self.rpit.Power( switch='off' )
         elif thekey == 'brightness':
             self.rpit.AdjustBrightness()
