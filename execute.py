@@ -1,14 +1,13 @@
 # *  Credits:
 # *
-# *  v.0.0.8
+# *  v.0.0.9
 # *  original RPi SenseHAT Control code by pkscout
 
 import os, subprocess, sys, time
 from datetime import datetime
 from threading import Thread
 from resources.common.xlogger import Logger
-from resources.sensehatmonitor import ConvertJoystickToKeypress, MonitorSensors
-from resources.screencontrol import RPiTouchscreen
+from resources.rpiinteract import ConvertJoystickToKeypress, ReadSenseHAT, RPiTouchscreen, RPiCamera
     
 
 p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
@@ -45,8 +44,9 @@ class Main:
         
 
     def _init_vars( self ):
-        self.SENSOR = MonitorSensors()
+        self.SENSOR = ReadSenseHAT()
         self.SCREEN = RPiTouchscreen()
+        self.CAMERA = RPiCamera()
         self.SENSORDATA = Logger( logname = 'sensordata',
                                   logconfig = 'timed',
                                   format = '%(asctime)-15s %(message)s',
@@ -54,7 +54,7 @@ class Main:
         
 
     def _read_sensor( self ):
-        raw_temp = self.SENSOR.get_temperature()
+        raw_temp = self.SENSOR.Temperature()
         if settings.adjusttemp and raw_temp:
             # if the SenseHAT is too close to the RPi CPU, it reads hot. This corrects that
             # see https://github.com/initialstate/wunderground-sensehat/wiki/Part-3.-Sense-HAT-Temperature-Correction
@@ -66,8 +66,8 @@ class Main:
             temperature = self._reading_to_str( raw_temp - ((cpu_temp - raw_temp)/5.466) )
         else:
             temperature = self._reading_to_str( raw_temp )
-        humidity = self._reading_to_str( self.SENSOR.get_humidity() )
-        pressure = self._reading_to_str( self.SENSOR.get_pressure() )
+        humidity = self._reading_to_str( self.SENSOR.Humidity() )
+        pressure = self._reading_to_str( self.SENSOR.Pressure() )
         if temperature == '0' and humidity == '0' and pressure == '0':
             datastr = ''
         else:

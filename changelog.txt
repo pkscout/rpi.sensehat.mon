@@ -1,3 +1,7 @@
+v.0.0.9
+- moved all RPi tools into rpiiteract.py
+- created new RPi class to get light level from RPi Camera
+
 v.0.0.8
 - added command line tool to change RPiTouchscreen state (useful for advanced Cron jobs)
 - added logic so script at least runs even without RPi specific libraries
