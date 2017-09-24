@@ -193,3 +193,26 @@ class RPiTouchscreen:
 
 
 
+class RPiCamera:
+    try:
+        import picamera
+        import picamera.array
+        import numpy as np
+        has_camera = True
+    except ImportError:
+        has_camera = False
+    
+    
+    def LightLevel( self ):
+        if has_camera:
+            with picamera.PiCamera() as camera:
+                camera.resolution = (100, 75)
+                with picamera.array.PiRGBArray(camera) as stream:
+                    camera.exposure_mode = 'auto'
+                    camera.awb_mode = 'auto'
+                    camera.capture(stream, format='rgb')
+                    pixAverage = int(np.average(stream.array[...,1]))
+        else:
+            pixAverage = 0
+        return pixAverage
+
