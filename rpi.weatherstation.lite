@@ -1,6 +1,6 @@
 #!/bin/bash
 ### BEGIN INIT INFO
-# Provides:          rpi.sensehat.mon
+# Provides:          rpi.weathersation.lite
 # Required-Start:    
 # Required-Stop:     
 # Default-Start:     2 3 4 5
@@ -10,8 +10,8 @@
 ### END INIT INFO
 
 DIR=/home/pi
-DAEMON=$DIR/rpi.sensehat.mon/execute.py
-DAEMON_NAME=rpi.sensehat.mon
+DAEMON=$DIR/rpi.weatherstation.lite/execute.py
+DAEMON_NAME=rpi.weatherstation.lite
 
 DAEMON_USER=root
 

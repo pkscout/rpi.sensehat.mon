@@ -1,7 +1,7 @@
 # *  Credits:
 # *
-# *  v.0.0.10
-# *  original RPi SenseHAT Control code by pkscout
+# *  v.0.1.0
+# *  original RPi Weatherstation Lite code by pkscout
 
 import os, subprocess, sys, time
 import resources.passback as passback

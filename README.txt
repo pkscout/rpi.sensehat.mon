@@ -1,4 +1,4 @@
-rpi.sensehat.mon
+rpi.weatherstation.lite
 ================
 This python script is designed to run as a service on a Raspberry Pi that has a SenseHAT installed.  If provides three functions:
 1. read the temperature, humidity, and pressure from the SenseHat and write it to a file
