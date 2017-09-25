@@ -6,6 +6,19 @@ adjusttemp = True
 # amount of time between sensor readings (in minutes)
 readingdelta = 2
 
+# whether autodim is enabled at restart
+autodim = True
+
+# if you want the script to trigger the Kodi weatherstation addon and update the weather window automatically, set to True
+# if set to False the Kodi weatherstation addon should be set to poll periodically for new data
+trigger_kodi = True
+
+# the URL Kodi remote command services are using
+kodiuri = 'localhost'
+
+# the port for websockets
+kodiwsport = 9090
+
 # time to turn the screen off and on (hh:mm, 24 hour format)
 changescreen = False
 screenofftime = '22:00'
@@ -13,7 +26,7 @@ screenontime = '5:00'
 
 # if True activates a thread to monitor the SenseHAT Joystick and convert those inputs
 # into key presses (useful to control Kodi using the Joystick)
-convertjoystick = False
+convertjoystick = True
 
 # if the SenseHAT is mounted in a case where the joystick is facing the back, you want
 # to reverse left and right actions so that it behaves the way you probably expect

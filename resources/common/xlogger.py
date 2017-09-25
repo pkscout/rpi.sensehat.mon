@@ -10,11 +10,11 @@ except:
 #this class creates an object used to log stuff to the xbmc log file
 class Logger():
     def __init__( self, logconfig="file", format='%(asctime)-15s %(levelname)-8s %(message)s', logfile='logfile.log',
-                  logname='_logger', numbackups=5, logdebug='true', maxsize=100000, when='midnight', interval=1, preamble='', ):
+                  logname='_logger', numbackups=5, logdebug='true', maxsize=100000, when='midnight', interval=1, preamble='' ):
         self.LOGPREAMBLE = preamble
         self.LOGDEBUG = logdebug
         if LOGTYPE == 'file':
-            self.logger = logging.getLogger( logname )
+            self.logger = logging.getLogger( logname )                
             self.logger.setLevel( logging.DEBUG )
             if logconfig == 'timed':
                 lr = logging.handlers.TimedRotatingFileHandler( logfile, when=when, backupCount=numbackups)

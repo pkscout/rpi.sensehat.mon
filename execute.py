@@ -1,22 +1,30 @@
 # *  Credits:
 # *
-# *  v.0.0.9
+# *  v.0.0.10
 # *  original RPi SenseHAT Control code by pkscout
 
 import os, subprocess, sys, time
+import resources.passback as passback
 from datetime import datetime
 from threading import Thread
 from resources.common.xlogger import Logger
 from resources.rpiinteract import ConvertJoystickToKeypress, ReadSenseHAT, RPiTouchscreen, RPiCamera
-    
 
 p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
 lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ) )
+sensordata = Logger( logname = 'sensordata',
+                     logconfig = 'timed',
+                     format = '%(asctime)-15s %(message)s',
+                     logfile = os.path.join( p_folderpath, 'data', 'sensordata.log' ) )
 
 try:
     import data.settings as settings
     settings.adjusttemp
     settings.readingdelta
+    settings.autodim
+    settings.trigger_kodi
+    settings.kodiuri
+    settings.kodiwsport
     settings.convertjoystick
     settings.reverselr
     settings.keymap
@@ -28,14 +36,35 @@ except (ImportError, AttributeError, NameError) as error:
     lw.log( [err_str, 'script stopped'] )
     sys.exit( err_str )
 
+if settings.trigger_kodi:
+    if sys.version_info >= (2, 7):
+        import json as _json
+    else:
+        import simplejson as _json
+    jsondict = {'id':'1', 
+                'jsonrpc':'2.0',
+                'method':'Addons.ExecuteAddon',
+                'params':{"addonid":"script.weatherstation"}}
+    jsondata = _json.dumps( jsondict )
+    try:
+        import websocket
+    except ImportError:
+        lw.log( ['websocket-client not installed, so the script cannot trigger Kodi weather window updates'] )
+        settings.trigger_kodi = False
+else:
+    jsondata = ''
+
 
 
 class Main:
-    def __init__( self ):
+    def __init__( self, ws=None ):
+        self.WS = ws
         self._init_vars()
         try:
             while True:
-                self.SENSORDATA.log( [self._read_sensor()] )
+                sensordata.log( [self._read_sensor()] )
+                if settings.trigger_kodi:
+                    self.WS.send( jsondata )
                 self._screen_change()
                 lw.log( ['waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )
                 time.sleep( settings.readingdelta * 60 )
@@ -47,10 +76,6 @@ class Main:
         self.SENSOR = ReadSenseHAT()
         self.SCREEN = RPiTouchscreen()
         self.CAMERA = RPiCamera()
-        self.SENSORDATA = Logger( logname = 'sensordata',
-                                  logconfig = 'timed',
-                                  format = '%(asctime)-15s %(message)s',
-                                  logfile = os.path.join( p_folderpath, 'data', 'sensordata.log' ) )
         
 
     def _read_sensor( self ):
@@ -101,13 +126,62 @@ class Main:
         return datetime(year=now.year, month=now.month, day=now.day, hour=int( tc[0] ), minute=int( tc[1] ) )
 
 
-if ( __name__ == "__main__" ):
-    lw.log( ['script started'], 'info' )
+
+class CheckPassback:
+    def __init__( self, ws=None ):
+        self.WS = ws
+        
+    def Run( self ):    
+        past = passback.xljoystick
+        while True:
+            current = passback.xljoystick
+            if past != current:
+                lw.log( ['xljoystick has changed to ' + current] )
+                if current == 'up':
+                    settings.autodim = not settings.autodim
+                    lw.log( ['autodim has been set to ' + str( settings.autodim )] )
+                    sensordata.log( ['\tautodim:' +  str( settings.autodim )] )
+                    if settings.trigger_kodi:
+                        self.WS.send( jsondata )
+                past = current
+
+
+
+def RunScript( ws=None ):
     if settings.convertjoystick:
-        #create and start a separate thread to monitor the joystick and convert to keyboard presses
-        cj = ConvertJoystickToKeypress( keymap=settings.keymap, reverselr=settings.reverselr )
-        t1 = Thread( target=cj.Convert() )
+        # create and start a separate thread to monitor the joystick and convert to keyboard presses
+        cj = ConvertJoystickToKeypress( keymap = settings.keymap,
+                                        reverselr = settings.reverselr )
+        cp = CheckPassback( ws = ws )
+        t1 = Thread( target = cp.Run )
         t1.setDaemon( True )
         t1.start()
-    Main()
+        t2 = Thread( target = cj.Convert )
+        t2.setDaemon( True )
+        t2.start()
+    Main( ws=ws )
+    
+
+def RunInWebsockets():
+    def on_message(ws, message):
+        lw.log( ['got back: ' + message] )
+    def on_error(ws, error):
+        lw.log( [error] )
+    def on_close(ws):
+        lw.log( ['websocket connection closed'] )
+    def on_open(ws):
+        lw.log( ['websocket connection opening'] )
+        RunScript( ws )
+        ws.close()
+    kodiurl = 'ws://%s:%s/jsponrpc' % (settings.kodiuri, settings.kodiwsport )
+    ws = websocket.WebSocketApp( kodiurl, on_message = on_message, on_error = on_error, on_open = on_open, on_close = on_close )
+    ws.run_forever()        
+
+
+if ( __name__ == "__main__" ):
+    lw.log( ['script started'], 'info' )
+    if settings.trigger_kodi:
+        RunInWebsockets()
+    else:
+        RunScript()
 lw.log( ['script finished'], 'info' )

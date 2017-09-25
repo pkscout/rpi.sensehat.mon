@@ -3,12 +3,30 @@
 # *  v.0.0.1
 # *  original RPi Interaction classes by pkscout
 
+import signal, time, random
 try:
     from sense_hat import SenseHat, ACTION_PRESSED, ACTION_HELD, ACTION_RELEASED
     has_sense_hat = True
 except ImportError:
-#    from random import randint
+    from random import randint
     has_sense_hat = False
+try:
+    import pyautogui
+    from datetime import datetime
+    has_pyautogui = True
+except ImportError:
+    has_pyautogui = False
+try:    
+    import rpi_backlight
+    has_rpi_backlight = True
+except ImportError:
+    has_rpi_backlight = False
+try:
+    import passback
+    has_passback = True
+except ImportError:
+    has_passback = False
+
 
 
 class ReadSenseHAT:
@@ -21,55 +39,60 @@ class ReadSenseHAT:
         if has_sense_hat:
             return self.SENSE.get_humidity()
         else:
-#            return randint( 43, 68 )
-            return 0
+            return randint( 43, 68 )
+#            return 0
 
         
     def Temperature( self ):
         if has_sense_hat:
             return self.SENSE.get_temperature()
         else:
-#            return randint( 21, 28 )
-            return 0
+            return randint( 21, 28 )
+#            return 0
 
         
     def Pressure( self ):
         if has_sense_hat:
             return self.SENSE.get_pressure()
         else:
-#            return randint( 990, 1020 )
-            return 0
+            return randint( 990, 1020 )
+#            return 0
 
 
 
 class ConvertJoystickToKeypress:
-    import signal
-    try:
-        import pyautogui
-        has_pyautogui = True
-    except ImportError:
-        has_pyautogui = False
-
-
-    def __init__( self, keymap, reverselr ):
-        self.DOWNACTION = 'pushed'
-        self.REVERSELR = reverselr
-        self.KEYMAP = keymap
+    def __init__( self, keymap, reverselr, lh_threshold=4 ):
+        if has_sense_hat:
+            self.SENSE = SenseHat()
         self.rpit = RPiTouchscreen()
+        self.KEYMAP = keymap
+        self.REVERSELR = reverselr
+        self.LH_THRESHOLD = lh_threshold
+        self.DOWNACTION = 'pushed'
+        self.HELDSTART = False
+        self.XLJOYSTICK = ''
+        self.XLJEVENT = False
 
 
     def Convert( self ):
-        if has_sense_hat:
-            sense = SenseHat()
-            sense.stick.direction_up = self._pushed_up
-            sense.stick.direction_down = self._pushed_down
-            sense.stick.direction_middle = self._pushed_middle
+        if has_passback and not has_sense_hat:
+            while True:
+                time.sleep( 10 )
+                passback.xljoystick = random.choice( ['up', 'down', 'left', 'right'] )                
+        if has_sense_hat and has_pyautogui:
+            self.SENSE.stick.direction_up = self._pushed_up
+            self.SENSE.stick.direction_down = self._pushed_down
+            self.SENSE.stick.direction_middle = self._pushed_middle
             if self.REVERSELR:
-                sense.stick.direction_left = self._pushed_right
-                sense.stick.direction_right = self._pushed_left
+                self.SENSE.stick.direction_left = self._pushed_right
+                self.SENSE.stick.direction_right = self._pushed_left
             else:
-                sense.stick.direction_left = self._pushed_left
-                sense.stick.direction_right = self._pushed_right        
+                self.SENSE.stick.direction_left = self._pushed_left
+                self.SENSE.stick.direction_right = self._pushed_right 
+            if has_passback and self.XLJEVENT:
+                passback.xljoysxtick = self.XLJOYSTICK
+                self.XLJOYSTICK = ''
+                self.XLJEVENT = False
             signal.pause()
 
 
@@ -87,6 +110,8 @@ class ConvertJoystickToKeypress:
     def _is_released( self, event ):
         if event.action == ACTION_HELD:
           self.DOWNACTION = 'held'
+          if not self.HELDSTART:
+              self.HELDSTART = datetime.now()
           return False
         elif event.action == ACTION_PRESSED:
           self.DOWNACTION = 'pushed'
@@ -96,47 +121,57 @@ class ConvertJoystickToKeypress:
   
     
     def _press_key( self, key_pushed, key_held ):
+        if self.HELDSTART and has_passback:
+            rightnow = datetime.now()
+            heldfor = rightnow - self.HELDSTART
+            if heldfor.total_seconds() >= self.LH_THRESHOLD:
+                self.XLJEVENT = True
         if self.DOWNACTION == 'pushed':
             self._do_action_for( key_pushed )
-        else:
+        elif not self.XLJEVENT:
             self._do_action_for( key_held )
         self.DOWNACTION = ''
+        self.HELDSTART = False
 
 
     def _pushed_up( self, event ):
+        self.XLJOYSTICK = 'up'
         if self._is_released( event ):
             self._press_key( self.KEYMAP['up'] )
   
     
     def _pushed_down( self, event ):
+        self.XLJOYSTICK = 'down'
         if self._is_released( event ):
             self._press_key( self.KEYMAP['down'] )
   
     
     def _pushed_left( self, event ):
+        if self.REVERSELR:
+            self.XLJOYSTICK = 'right'
+        else:
+            self.XLJOYSTICK = 'left'
         if self._is_released( event ):
             self._press_key( self.KEYMAP['left'] )
   
             
     def _pushed_right( self, event ):
+        if self.REVERSELR:
+            self.XLJOYSTICK = 'left'
+        else:
+            self.XLJOYSTICK = 'right'
         if self._is_released( event ):
             self._press_key( self.KEYMAP['right'] )
   
     
     def _pushed_middle( self, event ):
+        self.XLJOYSTICK = 'middle'
         if self._is_released( event ):
             self._press_key( self.KEYMAP['middle'] )
 
 
 
 class RPiTouchscreen:
-    try:    
-        import rpi_backlight
-        has_rpi_backlight = True
-    except ImportError:
-        has_rpi_backlight = False
-
-
     def __init__( self ):
         self.BDIRECTION = 1
 

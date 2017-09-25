@@ -1,3 +1,9 @@
+v.0.0.10
+- added option to have this script trigger the Kodi addon to update the weather screen
+- added option to pass extra long joystick holds back to script for special processing
+- added beginnings of autodim activation logic
+- for testing certain modules return random data if not on RPi
+
 v.0.0.9
 - moved all RPi tools into rpiiteract.py
 - created new RPi class to get light level from RPi Camera
