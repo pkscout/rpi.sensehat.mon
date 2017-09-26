@@ -32,6 +32,9 @@ convertjoystick = True
 # to reverse left and right actions so that it behaves the way you probably expect
 reverselr = True
 
+# the amount of time (in seconds) a joystick press has to be held to be considered extra long
+lh_threshold = 4
+
 # the keymap for regular and long holds of the SenseHAT Joystick
 # the first item in the array is for single action, the second is for held action
 keymap = {'up': ['up', 'brightness'],

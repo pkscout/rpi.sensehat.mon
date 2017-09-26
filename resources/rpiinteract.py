@@ -61,7 +61,7 @@ class ReadSenseHAT:
 
 
 class ConvertJoystickToKeypress:
-    def __init__( self, keymap, reverselr, lh_threshold=4 ):
+    def __init__( self, keymap, reverselr=False, lh_threshold=4 ):
         if has_sense_hat:
             self.SENSE = SenseHat()
         self.rpit = RPiTouchscreen()

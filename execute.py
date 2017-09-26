@@ -1,9 +1,10 @@
 # *  Credits:
 # *
-# *  v.0.1.0
+# *  v.0.1.1
 # *  original RPi Weatherstation Lite code by pkscout
 
-import os, subprocess, sys, time
+import os, sys, time
+from subprocess import Popen, PIPE
 import resources.passback as passback
 from datetime import datetime
 from threading import Thread
@@ -27,6 +28,7 @@ try:
     settings.kodiwsport
     settings.convertjoystick
     settings.reverselr
+    settings.lh_threshold
     settings.keymap
     settings.changescreen
     settings.screenofftime
@@ -57,25 +59,15 @@ else:
 
 
 class Main:
-    def __init__( self, ws=None ):
-        self.WS = ws
-        self._init_vars()
-        try:
-            while True:
-                sensordata.log( [self._read_sensor()] )
-                if settings.trigger_kodi:
-                    self.WS.send( jsondata )
-                self._screen_change()
-                lw.log( ['waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )
-                time.sleep( settings.readingdelta * 60 )
-        except KeyboardInterrupt:
-          pass
-        
-
-    def _init_vars( self ):
+    def __init__( self ):
         self.SENSOR = ReadSenseHAT()
         self.SCREEN = RPiTouchscreen()
         self.CAMERA = RPiCamera()
+
+
+    def Run( self ):
+        sensordata.log( [self._read_sensor()] )
+        TriggerScan()
         
 
     def _read_sensor( self ):
@@ -84,10 +76,17 @@ class Main:
             # if the SenseHAT is too close to the RPi CPU, it reads hot. This corrects that
             # see https://github.com/initialstate/wunderground-sensehat/wiki/Part-3.-Sense-HAT-Temperature-Correction
             try:
-                cpu_temp_raw = subprocess.check_output( "vcgencmd measure_temp", shell=True )
-                cpu_temp = float( cpu_temp_raw.split( '=' )[1].split( "'" ) )
-            except subprocess.CalledProcessError:
+                p = Popen( ['vcgencmd' 'measure_temp'], stdout=PIPE, stderr=PIPE )
+                vcgen = True
+            except OSError:
+                lw.log( ['vcgencmd not found, cannot adjust sensor reading for CPU temp'] )
+                vcgen = False
                 cpu_temp = 0
+            if vcgen:
+                cpu_temp, error = p.communicate()
+                if p.returncode != 0: 
+                    lw.log( ['could not get cpu temp %d %s %s' % (p.returncode, cpu_temp, error)] )
+                    cpu_temp = 0
             temperature = self._reading_to_str( raw_temp - ((cpu_temp - raw_temp)/5.466) )
         else:
             temperature = self._reading_to_str( raw_temp )
@@ -96,7 +95,8 @@ class Main:
         if temperature == '0' and humidity == '0' and pressure == '0':
             datastr = ''
         else:
-            datastr = '\tIndoorTemp:%s\tIndoorHumidity:%s\tIndoorPressure:%s' % (temperature, humidity, pressure)
+            autodim = str( settings.autodim )
+            datastr = '\tIndoorTemp:%s\tIndoorHumidity:%s\tIndoorPressure:%s\tAutoDim:%s' % (temperature, humidity, pressure, autodim)
         lw.log( ['rounded data from sensor: ' + datastr] )
         return datastr
 
@@ -127,61 +127,108 @@ class Main:
 
 
 
-class CheckPassback:
-    def __init__( self, ws=None ):
-        self.WS = ws
-        
-    def Run( self ):    
-        past = passback.xljoystick
-        while True:
-            current = passback.xljoystick
-            if past != current:
-                lw.log( ['xljoystick has changed to ' + current] )
-                if current == 'up':
-                    settings.autodim = not settings.autodim
-                    lw.log( ['autodim has been set to ' + str( settings.autodim )] )
-                    sensordata.log( ['\tautodim:' +  str( settings.autodim )] )
-                    if settings.trigger_kodi:
-                        self.WS.send( jsondata )
-                past = current
+def CheckPassback():
+    def _set_autodim():
+        settings.autodim = not settings.autodim
+        autodim_str = str( settings.autodim )
+        lw.log( ['AutoDim has been set to ' + autodim_str] )
+        sensordata.log( ['\tAutoDim:' +  autodim_str] )
+        TriggerScan()
+
+    past = passback.xljoystick
+    while True:
+        current = passback.xljoystick
+        if past != current:
+            lw.log( ['xljoystick has changed to ' + current] )
+            if current == 'up':
+                _set_autodim()
+            past = current
+        time.sleep(1)
+ 
+
+def TriggerScan():
+    if settings.trigger_kodi and ws_conn:
+        lw.log( ['triggering Kodi update'] )
+        ws.send( jsondata )
 
 
+def RunInWebsockets():
+    def on_message( ws, message ):
+        lw.log( ['got back %s from Kodi' % message] )
+        if 'System.OnQuit' in message:
+            ws.close()
 
-def RunScript( ws=None ):
+    def on_error( ws, error ):
+        lw.log( ['got an error reading data from Kodi: ' + str( error )] )
+
+    def on_open( ws ):
+        lw.log( ['opening websocket connection to Kodi'] )
+
+    def on_close( ws ):
+        lw.log( ['closing websocket connection to Kodi'] )
+
+    global should_quit
+    global ws
+    global ws_conn
+    kodiurl = 'ws://%s:%s/jsponrpc' % (settings.kodiuri, settings.kodiwsport )
+    ws = websocket.WebSocketApp( kodiurl, on_message = on_message, on_error = on_error, on_open = on_open, on_close = on_close )
+    wst = Thread( target = ws.run_forever )
+    wst.setDaemon( True )
+    wst.start()
+    should_quit = False
+    try:
+        conn_timeout = 5
+        while not ws.sock.connected and conn_timeout:
+            time.sleep( 1 )
+            conn_timeout -= 1
+        ws_conn = ws.sock.connected
+    except AttributeError:
+        ws_conn = False
+    lw.log( ['websocket status: ' + str( ws_conn )] )
+    try:
+        while (not should_quit) and ws.sock.connected:
+            gs.Run()
+            lw.log( ['in websockets and waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )
+            time.sleep( settings.readingdelta * 60 )
+    except KeyboardInterrupt:
+        should_quit = True
+    except AttributeError:
+        pass
+
+
+def SpawnThreads():
     if settings.convertjoystick:
         # create and start a separate thread to monitor the joystick and convert to keyboard presses
         cj = ConvertJoystickToKeypress( keymap = settings.keymap,
-                                        reverselr = settings.reverselr )
-        cp = CheckPassback( ws = ws )
-        t1 = Thread( target = cp.Run )
+                                        reverselr = settings.reverselr,
+                                        lh_threshold = settings.lh_threshold )
+        t1 = Thread( target = CheckPassback )
         t1.setDaemon( True )
         t1.start()
-        t2 = Thread( target = cj.Convert )
-        t2.setDaemon( True )
-        t2.start()
-    Main( ws=ws )
-    
-
-def RunInWebsockets():
-    def on_message(ws, message):
-        lw.log( ['got back: ' + message] )
-    def on_error(ws, error):
-        lw.log( [error] )
-    def on_close(ws):
-        lw.log( ['websocket connection closed'] )
-    def on_open(ws):
-        lw.log( ['websocket connection opening'] )
-        RunScript( ws )
-        ws.close()
-    kodiurl = 'ws://%s:%s/jsponrpc' % (settings.kodiuri, settings.kodiwsport )
-    ws = websocket.WebSocketApp( kodiurl, on_message = on_message, on_error = on_error, on_open = on_open, on_close = on_close )
-    ws.run_forever()        
-
+        t1 = Thread( target = cj.Convert )
+        t1.setDaemon( True )
+        t1.start()
+                     
 
 if ( __name__ == "__main__" ):
     lw.log( ['script started'], 'info' )
-    if settings.trigger_kodi:
-        RunInWebsockets()
-    else:
-        RunScript()
-lw.log( ['script finished'], 'info' )
+    global should_quit
+    global ws_conn
+    should_quit = False
+    ws_conn = False
+    gs = Main()
+    SpawnThreads()
+    try:
+        while not should_quit:
+            if settings.trigger_kodi:
+                RunInWebsockets()
+            if not should_quit:
+                ws_conn = False
+                gs.Run()
+                lw.log( ['waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )
+                time.sleep( settings.readingdelta * 60 )
+    except KeyboardInterrupt:
+        pass
+    lw.log( ['script finished'], 'info' )
+
+

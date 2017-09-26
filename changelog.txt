@@ -1,3 +1,7 @@
+v.0.1.1
+- substantial refactoring to allow the script to keep logging even if Kodi is not running
+- changed the way various threads were handled for simpler logic
+
 v.0.1.0
 - name change
 
