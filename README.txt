@@ -1,8 +1,8 @@
 rpi.weatherstation.lite
 ================
-This python script is designed to run as a service on a Raspberry Pi that has a SenseHAT installed.  If provides three functions:
+This python script is designed to run as a service on a Raspberry Pi that has a SenseHAT installed.  It provides three functions:
 1. read the temperature, humidity, and pressure from the SenseHat and write it to a file
-2. monitor the SenseHAT joystick and translate the 10 state options to keyboard presses (useful if you're using this in conjunction with Kodi)
+2. monitor the SenseHAT joystick and translate the 10 state options (press and long press for each action) to keyboard presses. Also returns extra long held keys to main script for processing.
 3. Turn the offical RPi touchscreen on or off on a schedule
 
 The last two functions can be disabled via settings.

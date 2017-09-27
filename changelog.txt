@@ -1,3 +1,6 @@
+v.0.1.2
+- added testmode setting to generate random data if running on non-RPi platform
+
 v.0.1.1
 - substantial refactoring to allow the script to keep logging even if Kodi is not running
 - changed the way various threads were handled for simpler logic

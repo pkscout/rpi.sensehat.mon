@@ -67,3 +67,7 @@ keymap = {'up': ['up', 'brightness'],
 # 'shift', 'shiftleft', 'shiftright', 'sleep', 'space', 'stop', 'subtract', 'tab',
 # 'up', 'volumedown', 'volumemute', 'volumeup', 'win', 'winleft', 'winright', 'yen',
 # 'command', 'option', 'optionleft', 'optionright'
+
+# if you're testing on a non-RPi platform, setting to True will generate random data for
+# SenseHAT sensors, extra long joystick actions, and PiCamera light level
+testmode = False

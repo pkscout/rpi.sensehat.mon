@@ -8,7 +8,6 @@ try:
     from sense_hat import SenseHat, ACTION_PRESSED, ACTION_HELD, ACTION_RELEASED
     has_sense_hat = True
 except ImportError:
-    from random import randint
     has_sense_hat = False
 try:
     import pyautogui
@@ -22,6 +21,13 @@ try:
 except ImportError:
     has_rpi_backlight = False
 try:
+    import picamera
+    import picamera.array
+    import numpy as np
+    has_camera = True
+except ImportError:
+    has_camera = False
+try:
     import passback
     has_passback = True
 except ImportError:
@@ -30,7 +36,8 @@ except ImportError:
 
 
 class ReadSenseHAT:
-    def __init__( self ):
+    def __init__( self, testmode=False ):
+        self.TESTMODE = testmode
         if has_sense_hat:
             self.SENSE = SenseHat()
 
@@ -38,33 +45,37 @@ class ReadSenseHAT:
     def Humidity( self ):
         if has_sense_hat:
             return self.SENSE.get_humidity()
+        elif self.TESTMODE:        
+            return random.randint( 43, 68 )
         else:
-            return randint( 43, 68 )
-#            return 0
+            return 0
 
         
     def Temperature( self ):
         if has_sense_hat:
             return self.SENSE.get_temperature()
+        elif self.TESTMODE:        
+            return random.randint( 21, 28 )
         else:
-            return randint( 21, 28 )
-#            return 0
+            return 0
 
         
     def Pressure( self ):
         if has_sense_hat:
             return self.SENSE.get_pressure()
+        elif self.TESTMODE:        
+            return random.randint( 990, 1020 )
         else:
-            return randint( 990, 1020 )
-#            return 0
+            return 0
 
 
 
 class ConvertJoystickToKeypress:
-    def __init__( self, keymap, reverselr=False, lh_threshold=4 ):
+    def __init__( self, keymap, reverselr=False, lh_threshold=4, testmode=False ):
+        self.TESTMODE = testmode
         if has_sense_hat:
             self.SENSE = SenseHat()
-        self.rpit = RPiTouchscreen()
+        self.rpit = RPiTouchscreen( testmode = self.TESTMODE )
         self.KEYMAP = keymap
         self.REVERSELR = reverselr
         self.LH_THRESHOLD = lh_threshold
@@ -75,7 +86,7 @@ class ConvertJoystickToKeypress:
 
 
     def Convert( self ):
-        if has_passback and not has_sense_hat:
+        if has_passback and (not has_sense_hat) and self.TESTMODE:
             while True:
                 time.sleep( 10 )
                 passback.xljoystick = random.choice( ['up', 'down', 'left', 'right'] )                
@@ -172,8 +183,9 @@ class ConvertJoystickToKeypress:
 
 
 class RPiTouchscreen:
-    def __init__( self ):
+    def __init__( self, testmode=False ):
         self.BDIRECTION = 1
+        self.TESTMODE = testmode
 
 
     def AdjustBrightness( self, step=25, smooth=True, duration=1 ):
@@ -229,14 +241,8 @@ class RPiTouchscreen:
 
 
 class RPiCamera:
-    try:
-        import picamera
-        import picamera.array
-        import numpy as np
-        has_camera = True
-    except ImportError:
-        has_camera = False
-    
+    def __init__( self, testmode=False ):
+        self.TESTMODE = testmode
     
     def LightLevel( self ):
         if has_camera:
@@ -247,6 +253,8 @@ class RPiCamera:
                     camera.awb_mode = 'auto'
                     camera.capture(stream, format='rgb')
                     pixAverage = int(np.average(stream.array[...,1]))
+        elif self.TESTMODE:
+            pixAverage = random.randint( 1, 255 )
         else:
             pixAverage = 0
         return pixAverage

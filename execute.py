@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.0.1.1
+# *  v.0.1.2
 # *  original RPi Weatherstation Lite code by pkscout
 
 import os, sys, time
@@ -26,13 +26,14 @@ try:
     settings.trigger_kodi
     settings.kodiuri
     settings.kodiwsport
+    settings.changescreen
+    settings.screenofftime
+    settings.screenontime
     settings.convertjoystick
     settings.reverselr
     settings.lh_threshold
     settings.keymap
-    settings.changescreen
-    settings.screenofftime
-    settings.screenontime
+    settings.testmode
 except (ImportError, AttributeError, NameError) as error:
     err_str = 'incomplete or no settings file found at %s' % os.path.join ( p_folderpath, 'data', 'settings.py' )
     lw.log( [err_str, 'script stopped'] )
@@ -60,9 +61,9 @@ else:
 
 class Main:
     def __init__( self ):
-        self.SENSOR = ReadSenseHAT()
-        self.SCREEN = RPiTouchscreen()
-        self.CAMERA = RPiCamera()
+        self.SENSOR = ReadSenseHAT( testmode = settings.testmode )
+        self.SCREEN = RPiTouchscreen( testmode = settings.testmode )
+        self.CAMERA = RPiCamera( testmode = settings.testmode )
 
 
     def Run( self ):
@@ -201,7 +202,8 @@ def SpawnThreads():
         # create and start a separate thread to monitor the joystick and convert to keyboard presses
         cj = ConvertJoystickToKeypress( keymap = settings.keymap,
                                         reverselr = settings.reverselr,
-                                        lh_threshold = settings.lh_threshold )
+                                        lh_threshold = settings.lh_threshold,
+                                        testmode = settings.testmode )
         t1 = Thread( target = CheckPassback )
         t1.setDaemon( True )
         t1.start()
