@@ -80,15 +80,16 @@ class Main:
         cpu_temp = cpu_temp.replace('\'C\n','')
         cpu_temp = float(cpu_temp)
         if settings.adjusttemp and raw_temp:
-            temperature = self._reading_to_str( raw_temp - ((cpu_temp - raw_temp)/2) )
+            adjusted_temp = raw_temp - ((cpu_temp - raw_temp)/2)
         else:
-            temperature = self._reading_to_str( raw_humidity - ((cpu_temp - raw_temp)/2) )
+            adjusted_temp = raw_temp
         raw_humidity = self.SENSOR.Humidity()
         if settings.adjusttemp and raw_humidity:
             dewpoint = raw_temp - ((100 - raw_humidity)/5)
-            humidity = 100 - 5 * (temperature - raw_temp)
+            humidity = self._reading_to_str( 100 - 5 * (adjusted_temp - raw_temp) )
         else:
             humidity = self._reading_to_str( self.SENSOR.Humidity() )
+        temperature = self._reading_to_str( adjusted_temp )
         pressure = self._reading_to_str( self.SENSOR.Pressure() )
         if temperature == '0' and humidity == '0' and pressure == '0':
             datastr = ''
