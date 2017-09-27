@@ -4,7 +4,6 @@
 # *  original RPi Weatherstation Lite code by pkscout
 
 import os, sys, time
-from subprocess import Popen, PIPE
 import resources.passback as passback
 from datetime import datetime
 from threading import Thread
