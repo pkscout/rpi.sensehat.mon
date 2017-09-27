@@ -1,0 +1,19 @@
+As noted, some of these are for the Kodi addon with which this interacts
+
+For script:
+NOW:
+nothing
+
+LATER:
+- read settings from Kodi for auto dimming
+- add setting indicating whether using touchscreen
+- have two keyboard mappings, one for touchscreen/joystick, one for joystick only
+
+
+For Kodi addon:
+NOW:
+nothing
+
+LATER:
+- have Auto Dim setting that would be used instead of the one in the script
+- add brightness controls (might need separate addon)
