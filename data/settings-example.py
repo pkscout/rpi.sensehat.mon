@@ -24,6 +24,14 @@ changescreen = False
 screenofftime = '22:00'
 screenontime = '5:00'
 
+# factor used when calculating adjusted temperature/humidity
+# the defaults are calibrated assuming you're using the official RPi 7" touchscreen
+# with the official case and have the back cover on the case
+# if your temps are too high, make that factor SMALLER
+# if your humidity is too high, make that factor LARGER
+temp_factor = 0.65
+humidity_factor = 2.7
+
 # if True activates a thread to monitor the SenseHAT Joystick and convert those inputs
 # into key presses (useful to control Kodi using the Joystick)
 convertjoystick = True

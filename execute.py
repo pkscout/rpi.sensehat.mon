@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.0.1.2
+# *  v.0.1.3
 # *  original RPi Weatherstation Lite code by pkscout
 
 import os, sys, time
@@ -29,6 +29,8 @@ try:
     settings.changescreen
     settings.screenofftime
     settings.screenontime
+    settings.temp_factor
+    settings.humidity_factor
     settings.convertjoystick
     settings.reverselr
     settings.lh_threshold
@@ -80,14 +82,14 @@ class Main:
         cpu_temp = cpu_temp.replace('\'C\n','')
         cpu_temp = float(cpu_temp)
         if settings.adjusttemp and raw_temp:
-            adjusted_temp = raw_temp - ((cpu_temp - raw_temp)/2)
+            adjusted_temp = raw_temp - ((cpu_temp - raw_temp) / settings.temp_factor)
         else:
             adjusted_temp = raw_temp
         raw_humidity = self.SENSOR.Humidity()
         if settings.adjusttemp and raw_humidity:
             dewpoint = raw_temp - ((100 - raw_humidity) / 5)
             adjusted_humidity = 100 - 5 * (adjusted_temp - dewpoint)
-            humidity = self._reading_to_str( raw_humidity + ((adjusted_humidity - raw_humidity) / 2) )
+            humidity = self._reading_to_str( raw_humidity + ((adjusted_humidity - raw_humidity) / settings.humidity_factor) )
         else:
             humidity = self._reading_to_str( self.SENSOR.Humidity() )
         temperature = self._reading_to_str( adjusted_temp )

@@ -2,10 +2,9 @@ As noted, some of these are for the Kodi addon with which this interacts
 
 For script:
 NOW:
-nothing
+- possibly add setting for "case cover on back adjustment too" (or change factor above)
 
 LATER:
-- make the factor for ambient adjustment a setting (right now it's hard coded at 2)
 - read settings from Kodi for auto dimming
 - add setting indicating whether using touchscreen
 - have two keyboard mappings, one for touchscreen/joystick, one for joystick only

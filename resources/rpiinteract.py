@@ -44,29 +44,35 @@ class ReadSenseHAT:
     
     def Humidity( self ):
         if has_sense_hat:
-            return self.SENSE.get_humidity()
+            for i in range( 0, 5 ):
+                reading = self.SENSE.get_humidity()
+                if reading:
+                    return reading
         elif self.TESTMODE:        
             return random.randint( 43, 68 )
-        else:
-            return 0
+        return 0
 
         
     def Temperature( self ):
         if has_sense_hat:
-            return self.SENSE.get_temperature()
+            for i in range( 0, 5 ):
+                reading = self.SENSE.get_temperature()
+                if reading:
+                    return reading
         elif self.TESTMODE:        
             return random.randint( 21, 28 )
-        else:
-            return 0
+        return 0
 
         
     def Pressure( self ):
         if has_sense_hat:
-            return self.SENSE.get_pressure()
+            for i in range( 0, 5 ):
+                reading = self.SENSE.get_pressure()
+                if reading:
+                    return reading
         elif self.TESTMODE:        
             return random.randint( 990, 1020 )
-        else:
-            return 0
+        return 0
 
 
 
