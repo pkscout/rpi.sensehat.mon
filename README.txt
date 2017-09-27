@@ -13,13 +13,16 @@ Prerequisites:
 
 2. You should use Python 2.7.x for this. (3.4.x might work, but I haven't tested it).
 
-3. If you want to use the SenseHAT joystick to control Kodi, you need to add the PyAutoGUI module and its associated dependencies to your python install. (these instructions are for Python 2.7.x. If you're using Python 3.4.x, then use pip3 and python3-dev)
+3. For rpi.weatherstation.lite to trigger Kodi to update the display, you need the websocket client:
+From a terminal window:	pip install websocket-client
+
+4. If you want to use the SenseHAT joystick to control Kodi, you need to add the PyAutoGUI module and its associated dependencies to your python install. (these instructions are for Python 2.7.x. If you're using Python 3.4.x, then use pip3 and python3-dev)
 From a terminal window:	sudo apt-get install  python-xlib
                         sudo apt-get install libjpeg-dev
                         pip install pillow
 						pip install pyautogui
 
-4. If you are using the official RPi 7" touchscreen and want to be able to control the on/off and brightness of the display, you need to add the rpi backlight module.  As per the github repo for this module, you also need to edit the backlight rules.
+5. If you are using the official RPi 7" touchscreen and want to be able to control the on/off and brightness of the display, you need to add the rpi backlight module.  As per the github repo for this module, you also need to edit the backlight rules.
 From a terminal window:	pip install rpi-backlight
 						sudo nano /etc/udev/rules.d/backlight-permissions.rules
 and add: SUBSYSTEM=="backlight",RUN+="/bin/chmod 666 /sys/class/backlight/%k/brightness /sys/class/backlight/%k/bl_power"
