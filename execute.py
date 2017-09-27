@@ -84,12 +84,10 @@ class Main:
         else:
             adjusted_temp = raw_temp
         raw_humidity = self.SENSOR.Humidity()
-        lw.log( ['raw_h: %s raw_t: %s' % (str( raw_humidity ), str( raw_temp ))] )
         if settings.adjusttemp and raw_humidity:
             dewpoint = raw_temp - ((100 - raw_humidity) / 5)
-            temp_h = 100 - 5 * (raw_temp - dewpoint)
-            lw.log( ['recalcuated humidity: ' + str( temp_h )] )
             adjusted_humidity = 100 - 5 * (adjusted_temp - dewpoint)
+            lw.log( ['raw_h: %s raw_t: %s ad_h: %s' % (str( raw_humidity ), str( raw_temp ), str( adjusted_humidity ))] )
             humidity = self._reading_to_str( 100 - ((adjusted_humidity - raw_humidity) / 2) )
         else:
             humidity = self._reading_to_str( self.SENSOR.Humidity() )
