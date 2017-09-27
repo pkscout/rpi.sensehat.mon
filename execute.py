@@ -4,6 +4,7 @@
 # *  original RPi Weatherstation Lite code by pkscout
 
 import os, sys, time
+from subprocess import Popen, PIPE
 import resources.passback as passback
 from datetime import datetime
 from threading import Thread
@@ -76,7 +77,7 @@ class Main:
             # if the SenseHAT is too close to the RPi CPU, it reads hot. This corrects that
             # see https://github.com/initialstate/wunderground-sensehat/wiki/Part-3.-Sense-HAT-Temperature-Correction
             try:
-                p = Popen( ['vcgencmd' 'measure_temp'], stdout=PIPE, stderr=PIPE )
+                p = Popen( ['/opt/vc/bin/vcgencmd' 'measure_temp'], stdout=PIPE, stderr=PIPE )
                 vcgen = True
             except OSError:
                 lw.log( ['vcgencmd not found, cannot adjust sensor reading for CPU temp'] )
@@ -87,6 +88,10 @@ class Main:
                 if p.returncode != 0: 
                     lw.log( ['could not get cpu temp %d %s %s' % (p.returncode, cpu_temp, error)] )
                     cpu_temp = 0
+                else:
+                    cpu_temp = cpu_temp.replace('temp=','')
+                    cpu_temp = cpu_temp.replace('\'C\n','')
+                    cpu_temp = float(cputemp)
             temperature = self._reading_to_str( raw_temp - ((cpu_temp - raw_temp)/5.466) )
         else:
             temperature = self._reading_to_str( raw_temp )
