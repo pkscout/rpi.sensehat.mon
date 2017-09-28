@@ -4,6 +4,7 @@
 # *  original RPi Interaction classes by pkscout
 
 import signal, time, random
+from datetime import datetime
 try:
     from sense_hat import SenseHat, ACTION_PRESSED, ACTION_HELD, ACTION_RELEASED
     has_sense_hat = True
@@ -11,7 +12,6 @@ except ImportError:
     has_sense_hat = False
 try:
     import pyautogui
-    from datetime import datetime
     has_pyautogui = True
 except ImportError:
     has_pyautogui = False
@@ -137,16 +137,16 @@ class ConvertJoystickToKeypress:
           return True
   
     
-    def _press_key( self, key_pushed, key_held ):
+    def _press_key( self, keys ):
         if self.HELDSTART and has_passback:
             rightnow = datetime.now()
             heldfor = rightnow - self.HELDSTART
             if heldfor.total_seconds() >= self.LH_THRESHOLD:
                 self.XLJEVENT = True
         if self.DOWNACTION == 'pushed':
-            self._do_action_for( key_pushed )
+            self._do_action_for( keys[0] )
         elif not self.XLJEVENT:
-            self._do_action_for( key_held )
+            self._do_action_for( keys[1] )
         self.DOWNACTION = ''
         self.HELDSTART = False
 
