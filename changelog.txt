@@ -1,3 +1,7 @@
+v.0.1.4
+- fix for joystick actions not resulting in anything
+- fix for crash if vcgencmd is not found
+
 v.0.1.3
 - added temp_factor and humidity_factor to settings to allow calibration of SenseHAT
 
