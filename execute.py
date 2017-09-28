@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.0.1.3
+# *  v.0.1.4
 # *  original RPi Weatherstation Lite code by pkscout
 
 import os, sys, time
@@ -75,12 +75,16 @@ class Main:
 
     def _read_sensor( self ):
         raw_temp = self.SENSOR.Temperature()
-        # if the SenseHAT is too close to the RPi CPU, it reads hot. This corrects that
-        t = os.popen('/opt/vc/bin/vcgencmd measure_temp')
-        cpu_temp = t.read()
-        cpu_temp = cpu_temp.replace('temp=','')
-        cpu_temp = cpu_temp.replace('\'C\n','')
-        cpu_temp = float(cpu_temp)
+        try:
+            # if the SenseHAT is too close to the RPi CPU, it reads hot. This corrects that
+            t = os.popen('/opt/vc/bin/vcgencmd measure_temp')
+            cpu_temp = t.read()
+            cpu_temp = cpu_temp.replace('temp=','')
+            cpu_temp = cpu_temp.replace('\'C\n','')
+            cpu_temp = float(cpu_temp)
+        except ValueError:
+            lw.log( ['did not get any reading back from vcgencmd, setting CPU temp to 0'] )
+            cpu_temp = 0
         if settings.adjusttemp and raw_temp:
             adjusted_temp = raw_temp - ((cpu_temp - raw_temp) / settings.temp_factor)
         else:
