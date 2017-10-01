@@ -1,5 +1,9 @@
+v.1.0.0
+- feature complete
+- see README.txt for features and usage details
+
 v.0.4.1
-- fix for name change of Kodi addon with which this comminicates
+- fix for name change of Kodi addon with which this communicates
 
 v.0.4.0
 - gave up on temperature/humidity adjustments and deleted that code

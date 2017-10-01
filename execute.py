@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.0.4.1
+# *  v.1.0.0
 # *  original RPi Weatherstation Lite code by pkscout
 
 import os, sys, time
@@ -27,13 +27,10 @@ try:
     import data.settings as settings
     settings.readingdelta
     settings.autodim
-    settings.mindim
-    settings.maxdim
-    settings.minlevel
-    settings.maxlevel
-    settings.changescreen
-    settings.screenofftime
-    settings.screenontime
+    settings.dark
+    settings.light
+    settings.specialtriggers
+    settings.timedtriggers
     settings.trigger_kodi
     settings.kodiuri
     settings.kodiwsport
@@ -48,18 +45,13 @@ if settings.trigger_kodi:
         import json as _json
     else:
         import simplejson as _json
-    jsondict = {'id':'1', 
-                'jsonrpc':'2.0',
-                'method':'Addons.ExecuteAddon',
-                'params':{"addonid":"script.weatherstation.lite"}}
-    jsondata = _json.dumps( jsondict )
     try:
         import websocket
     except ImportError:
         lw.log( ['websocket-client not installed, so the script cannot trigger Kodi weather window updates'] )
         settings.trigger_kodi = False
 else:
-    jsondata = ''
+    jsontrigger = ''
 
 
 
@@ -68,11 +60,22 @@ class Main:
         self.SENSOR = SenseHatSensors( testmode = settings.testmode )
         self.SCREEN = RPiTouchscreen( testmode = settings.testmode )
         self.CAMERA = RPiCamera( testmode = settings.testmode )
-        self.STOREDBRIGHTNESS = 255
+        self.AUTODIM = settings.autodim
+        self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
         self.SCREENSTATE = 'On'
+        self.SUNRISE = ''
+        self.SUNSET = ''
+        self.DARKRUN = False
+        self.LIGHTRUN = False
+        jsondict = {'id':'1', 
+                    'jsonrpc':'2.0',
+                    'method':'Addons.ExecuteAddon',
+                    'params':{"addonid":"script.weatherstation.lite"}}
+        self.KODIUPDATE = _json.dumps( jsondict )
 
 
     def Run( self ):
+        reload(settings)
         temperature = self.SENSOR.Temperature()
         humidity = self.SENSOR.Humidity()
         pressure = self.SENSOR.Pressure()
@@ -84,8 +87,8 @@ class Main:
             s_data.append( 'IndoorHumidity:' + self._reading_to_str( humidity ) )
         if pressure is not None:
             s_data.append( 'IndoorPressure:' + self._reading_to_str( pressure ) )
-        s_data.append( 'AutoDim:' + str( settings.autodim ) )
-        s_data.append( 'ScreenStatus:' + self._screen_change() )
+        s_data.append( 'AutoDim:' + str( self.AUTODIM ) )
+        s_data.append( 'ScreenStatus:' + self.SCREENSTATE )
         if lightlevel is not None:
             s_data.append( 'LightLevel:' + self._reading_to_str( lightlevel ) )
         d_str = ''
@@ -93,93 +96,141 @@ class Main:
             d_str = '%s\t%s' % (d_str, item)
         lw.log( ['rounded data from sensor: ' + d_str] )
         sensordata.log( [d_str] )
-        self._triggerscan()
+        self._sendjson( self.KODIUPDATE )
         self._autodim( lightlevel = lightlevel )
-                
+
 
     def HandleAction( self, action ):
-        if action == 'BrightnessUp':
-            lw.log( ['turning brightness up'] )
+        action = action.lower()
+        if action == 'brightnessup':
             self.SCREEN.AdjustBrightness( direction='up' )
-        elif action == 'BrightnessDown':
-            lw.log( ['turning brightness down'] )
+            lw.log( ['turned brightness up'] )
+        elif action == 'brightnessdown':
             self.SCREEN.AdjustBrightness( direction='down' )
-        elif action == 'AutoDimOn':
-            lw.log( ['turning autodim on'] )
-            settings.autodim = True
-        elif action == 'AutoDimOff':
-            lw.log( ['turning autodim off'] )
-            settings.autodim = False
-        elif action == 'ScreenOn':
-            lw.log( ['turning screen on'] )
-            self.SCREEN.SetBrightness( brightness = self.STOREDBRIGHTNESS )
-            self.SCREENSTATE = 'On'
-        elif action == 'ScreenOff':
-            lw.log( ['turning screen off'] )
-            self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
-            self.SCREEN.SetBrightness( brightness = 11 )
-            self.SCREENSTATE = 'Off'
+            lw.log( ['turned brightness down'] )
+        elif action == 'autodimon':
+            self.AUTODIM = True
+            lw.log( ['turned autodim on'] )
+        elif action == 'autodimoff':
+            self.AUTODIM = False
+            lw.log( ['turned autodim off'] )
+        elif action.startswith( 'screenon' ):
+            if self.SCREENSTATE == 'Off':
+                sb = action.split( ':' )
+                try:
+                    brightness = sb[1]
+                except IndexError:
+                    brightness = self.STOREDBRIGHTNESS
+                self.SCREEN.SetBrightness( brightness = brightness )
+                self.SCREENSTATE = 'On'
+                lw.log( ['turned screen on to brightness of ' + str( brightness )] )
+        elif action == 'screenoff':
+            if self.SCREENSTATE == 'On':
+                self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
+                self.SCREEN.SetBrightness( brightness = 11 )
+                self.SCREENSTATE = 'Off'
+                lw.log( ['turned screen off and saved brightness as ' + str( self.STOREDBRIGHTNESS )] )
+        elif action.startswith( 'brightness:' ):
+            try:
+                level = int( action.split(':')[1] )
+            except ValueError:
+                level = None
+            if level:
+                self.SCREEN.SetBrightness( brightness = level )
+        elif action == 'getsunrisesunset':
+            self.SetSunRiseSunset()
+
+
+    def SetSunRiseSunset( self, jsonresult = {} ):
+        if jsonresult:
+            self.SUNRISE = self._convert_to_24_hour( jsonresult.get( 'Window(Weather).Property(Today.Sunrise)' ) )
+            self.SUNSET = self._convert_to_24_hour( jsonresult.get( 'Window(Weather).Property(Today.Sunset)' ) )
+            lw.log( ['set sunrise to %s and sunset to %s' % (self.SUNRISE, self.SUNSET)] )
+        else:
+            if not self.AUTODIM:
+                return
+            lw.log( ['getting sunrise and sunset times from Kodi'] )
+            jsondict = { 'id':'2', 'jsonrpc':'2.0',  'method':'XBMC.GetInfoLabels',
+                         'params':{'labels':['Window(Weather).Property(Today.Sunrise)', 'Window(Weather).Property(Today.Sunset)']} }
+            kodiquery = _json.dumps( jsondict )
+            self._sendjson( kodiquery )
 
 
     def _autodim( self, lightlevel ):
-        if not settings.autodim or not lightlevel:
+        if not self.AUTODIM:
             return
-        delta = int( (settings.maxdim - settings.mindim) / 3 )
-        highdim = settings.maxdim - delta
-        lowdim =  settings.mindim + delta
-        delta = int( (settings.maxlevel - settings.minlevel) / 4 )
-        highlevel = settings.maxlevel - delta
-        midlevel =  settings.minlevel + (2 * delta)
-        lowlevel = settings.minlevel + delta
-        if lightlevel >= highlevel:
-            lw.log( ['auto adjusting brightness to max of ' + str( settings.maxdim )] )
-            self.SCREEN.SetBrightness( brightness = settings.maxdim )
-        elif lightlevel >= midlevel:
-            lw.log( ['auto adjusting brightness to high of ' + str( highdim )] )
-            self.SCREEN.SetBrightness( brightness = highdim )
-        elif lightlevel >= lowlevel:
-            lw.log( ['auto adjusting brightness to low of ' + str( lowdim )] )
-            self.SCREEN.SetBrightness( brightness = lowdim )
+        do_dark = False
+        do_light = False
+        if lightlevel:
+            if lightlevel <= settings.dark:
+                do_dark = True
+            if lightlevel >= settings.light:
+                do_light = True
+        if do_dark and not self.DARKRUN:
+            lw.log( ['dark trigger activated with ' + settings.specialtriggers.get( 'dark' )] )
+            self.HandleAction( settings.specialtriggers.get( 'dark' ) )
+            self.DARKRUN = True
+            self.LIGHTRUN = False
+        elif do_light and not self.LIGHTRUN:
+            lw.log( ['light trigger activated with ' + settings.specialtriggers.get( 'light' )] )
+            self.HandleAction( settings.specialtriggers.get( 'light' ) )
+            self.DARKRUN = False
+            self.LIGHTRUN = True
+        elif self._is_time( self.SUNRISE ):
+            lw.log( ['sunrise trigger activated with ' + settings.specialtriggers.get( 'sunrise' )] )
+            self.HandleAction( settings.specialtriggers.get( 'sunrise' ) )
+        elif self._is_time( self.SUNSET ):
+            lw.log( ['sunset trigger activated with ' + settings.specialtriggers.get( 'sunset' )] )
+            self.HandleAction( settings.specialtriggers.get( 'sunset' ) )
         else:
-            lw.log( ['auto adjusting brightness to min of ' + str( settings.mindim )] )
-            self.SCREEN.SetBrightness( brightness = settings.mindim )
-            
+            for onetrigger in settings.timedtriggers:
+                if self._is_time( onetrigger[0] ):
+                    lw.log( ['timed trigger %s activated with %s' % (onetrigger[0], onetrigger[1])] )
+                    self.HandleAction( onetrigger[1] )
+
+
+    def _convert_to_24_hour( self, timestr ):
+        time_split = timestr.split( ' ' )
+        if time_split[1] == 'AM':
+            return time_split[0]
+        else:
+            hm = time_split[0].split( ':' )
+            hour = str( int( hm[0] ) + 12 )
+            return '%s:%s' % (hour, hm[1])
+
+
+    def _is_time( self, thetime ):
+        action_time = self._set_datetime( thetime )
+        if not action_time:
+            return False
+        rightnow = datetime.now()
+        action_diff = rightnow - action_time
+        if abs( action_diff.total_seconds() ) < settings.readingdelta * 30: # so +/- window is total readingdelta
+            return True
+        else:
+            return False
+
 
     def _reading_to_str( self, reading ):
         return str( int( round( reading ) ) )
 
 
-    def _screen_change( self ):
-        if settings.changescreen:
-            offtime = self._set_datetime( settings.screenofftime )
-            ontime = self._set_datetime( settings.screenontime )
-            rightnow = datetime.now()
-            offdiff = rightnow - offtime
-            ondiff = rightnow - ontime
-            if abs( offdiff.total_seconds() ) < settings.readingdelta * 30: # so +/- window is total readingdelta
-                lw.log( ['setting backlight to 11'] )
-                self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
-                self.SCREEN.SetBrightness( brightness = 0 )
-                self.SCREENSTATE = 'Off'
-            elif (abs( ondiff.total_seconds() ) < settings.readingdelta * 30):
-                lw.log( ['setting backlight to original setting'] )
-                self.SCREEN.SetBrightness( brightness = self.STOREDBRIGHTNESS )
-                self.SCREENSTATE = 'On'
-        return self.SCREENSTATE
+    def _sendjson( self, jdata ):
+        if settings.trigger_kodi and ws_conn:
+            lw.log( ['sending Kodi ' + jdata] )
+            ws.send( jdata )
 
 
     def _set_datetime( self, str_time ):
         tc = str_time.split( ':' )
         now = datetime.now()
-        return datetime(year=now.year, month=now.month, day=now.day, hour=int( tc[0] ), minute=int( tc[1] ) )
+        try:
+            fulldate = datetime( year = now.year, month = now.month, day = now.day, hour = int( tc[0] ), minute = int( tc[1] ) )
+        except ValueError:
+            fulldate = None
+        return fulldate
 
-
-    def _triggerscan( self ):
-        if settings.trigger_kodi and ws_conn:
-            lw.log( ['triggering Kodi update'] )
-            ws.send( jsondata )
-
-
+    
 
 def RunInWebsockets():
     def on_message( ws, message ):
@@ -191,6 +242,8 @@ def RunInWebsockets():
             action = jm.get( 'params', {} ).get( 'data', {} ).get( 'action' )
             if action:
                 gs.HandleAction( action )
+        elif jm.get( 'id' ) == '2':
+            gs.SetSunRiseSunset( jsonresult = jm.get( 'result' ) )
                 
     def on_error( ws, error ):
         lw.log( ['got an error reading data from Kodi: ' + str( error )] )
@@ -220,6 +273,7 @@ def RunInWebsockets():
         ws_conn = False
     lw.log( ['websocket status: ' + str( ws_conn )] )
     try:
+        gs.SetSunRiseSunset()
         while (not should_quit) and ws.sock.connected:
             gs.Run()
             lw.log( ['in websockets and waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )

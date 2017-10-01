@@ -5,7 +5,8 @@ NOW:
 nothing
 
 LATER:
-- more robust and flexible scheduling of screen dimming
+- add 'all', 'weekday', 'weekend' logic to auto dimming
+
 
 For Kodi addon:
 NOW:
@@ -14,9 +15,18 @@ nothing
 LATER:
 nothing
 
+
 For Kodi skin:
 NOW:
-nothing
+when wake from sleep close the navigation menu
+make sleep overlay button black to finish blanking screen
 
 LATER:
 nothing
+
+
+Notes on Auto Dimming:
+Have a Set of "Date" Types:
+All
+Weekday
+Weekend

@@ -20,11 +20,12 @@ class RPiCamera:
         except NameError:
             self.CAMERA = False
     
-    def LightLevel( self ):
+    def LightLevel( self, use_led=False ):
         if self.CAMERA:
             for i in range( 0, 5 ):
                 with picamera.PiCamera() as camera:
                     camera.resolution = (128, 80)
+                    camera.led = use_led
                     with picamera.array.PiRGBArray(camera) as stream:
                         camera.exposure_mode = 'auto'
                         camera.awb_mode = 'auto'
