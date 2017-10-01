@@ -1,26 +1,22 @@
-As noted, some of these are for the Kodi addon with which this interacts
+As noted, some of these are for the Kodi addon or skin with which this interacts
 
 For script:
 NOW:
 nothing
 
 LATER:
-- react to Kodi request for brightness change
-- react to Kodi request to toggle auto dimming
-- react to Kodi information about input.enablemouse setting
-- have a default for whether the weatherstation has a touchscreen or not
-- have two keyboard mappings, one for touchscreen/joystick, one for joystick only
-
+- more robust and flexible scheduling of screen dimming
 
 For Kodi addon:
 NOW:
 nothing
 
 LATER:
-- add code to send JSON-RPC notification for brightness change (up and down)
-- add code to send JSON-RPC notification to toggle auto dimming
-- add code to send JSON-RPC to send status of input.enablemouse setting 
-
+nothing
 
 For Kodi skin:
-- add a Window for control functions (brightness, toggle autodim, open settings)
+NOW:
+nothing
+
+LATER:
+nothing

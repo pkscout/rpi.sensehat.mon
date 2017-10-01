@@ -1,3 +1,22 @@
+v.0.4.0
+- gave up on temperature/humidity adjustments and deleted that code
+  if you're using a SenseHAT get a ribbon cable and move it away from the CPU
+- changed the way the sensor log files are generated to exclude non-responsive sensors
+- code refactoring
+- auto dimming logic now works
+- added min and max light levels in settings to help calibrate camera for particular environs
+
+v.0.3.1
+- fixed bug in functions to set brightness (11 is the lowest you can set it)
+
+v.0.3.0
+- removed all Joystick interactions (couldn't get the python bindings to respond)
+- changed screen off functions to set brightness to 0 instead (so touchscreen stays active)
+- responds to message from Kodi to turn brightness back up from 0
+
+v.0.2.0
+- added ability to handle websocket messages sent by Kodi (brightness and auto dim)
+
 v.0.1.4
 - fix for joystick actions not resulting in anything
 - fix for crash if vcgencmd is not found
