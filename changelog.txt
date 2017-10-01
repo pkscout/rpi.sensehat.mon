@@ -1,3 +1,6 @@
+v.0.4.1
+- fix for name change of Kodi addon with which this comminicates
+
 v.0.4.0
 - gave up on temperature/humidity adjustments and deleted that code
   if you're using a SenseHAT get a ribbon cable and move it away from the CPU

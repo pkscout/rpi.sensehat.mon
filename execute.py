@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.0.4.0
+# *  v.0.4.1
 # *  original RPi Weatherstation Lite code by pkscout
 
 import os, sys, time
@@ -51,7 +51,7 @@ if settings.trigger_kodi:
     jsondict = {'id':'1', 
                 'jsonrpc':'2.0',
                 'method':'Addons.ExecuteAddon',
-                'params':{"addonid":"script.weatherstation"}}
+                'params':{"addonid":"script.weatherstation.lite"}}
     jsondata = _json.dumps( jsondict )
     try:
         import websocket
