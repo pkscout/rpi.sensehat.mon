@@ -1,9 +1,9 @@
 # *  Credits:
 # *
-# *  v.1.0.0
+# *  v.1.1.0~beta1
 # *  original RPi Weatherstation Lite code by pkscout
 
-import os, sys, time
+import calendar, os, sys, time
 from datetime import datetime
 from threading import Thread
 from resources.common.xlogger import Logger
@@ -31,6 +31,8 @@ try:
     settings.light
     settings.specialtriggers
     settings.timedtriggers
+    settings.weekdays
+    settings.weekend
     settings.trigger_kodi
     settings.kodiuri
     settings.kodiwsport
@@ -176,15 +178,17 @@ class Main:
             self.HandleAction( settings.specialtriggers.get( 'light' ) )
             self.DARKRUN = False
             self.LIGHTRUN = True
-        elif self._is_time( self.SUNRISE ):
-            lw.log( ['sunrise trigger activated with ' + settings.specialtriggers.get( 'sunrise' )] )
-            self.HandleAction( settings.specialtriggers.get( 'sunrise' ) )
-        elif self._is_time( self.SUNSET ):
-            lw.log( ['sunset trigger activated with ' + settings.specialtriggers.get( 'sunset' )] )
-            self.HandleAction( settings.specialtriggers.get( 'sunset' ) )
         else:
             for onetrigger in settings.timedtriggers:
-                if self._is_time( onetrigger[0] ):
+                if onetrigger[0].lower() == 'sunrise':
+                    onetrigger[0] = self.SUNRISE
+                if onetrigger[0].lower() == 'sunset':
+                    onetrigger[0] = self.SUNSET
+                try:
+                    checkdays = onetrigger[2]
+                except IndexError:
+                    checkdays = ''
+                if self._is_time( onetrigger[0], checkdays = checkdays ):
                     lw.log( ['timed trigger %s activated with %s' % (onetrigger[0], onetrigger[1])] )
                     self.HandleAction( onetrigger[1] )
 
@@ -199,10 +203,14 @@ class Main:
             return '%s:%s' % (hour, hm[1])
 
 
-    def _is_time( self, thetime ):
+    def _is_time( self, thetime, checkdays='' ):
         action_time = self._set_datetime( thetime )
         if not action_time:
             return False
+        elif checkdays.lower().startswith( 'weekday' ) and not calendar.day_name[action_time.weekday()] in settings.weekdays:
+            return False
+        elif checkdays.lower == 'weekend' and not calendar.day_name[action_time.weekday()] in settings.weekend:
+            return False  
         rightnow = datetime.now()
         action_diff = rightnow - action_time
         if abs( action_diff.total_seconds() ) < settings.readingdelta * 30: # so +/- window is total readingdelta

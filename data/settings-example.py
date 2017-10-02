@@ -19,15 +19,21 @@ light = 80
 
 # special triggers for autodim
 specialtriggers = { 'dark': 'ScreenOff',
-                    'light': 'ScreenOn',
-                    'sunrise': 'ScreenOn:200',
-                    'sunset': 'Brightness:175' }
+                    'light': 'ScreenOn' }
 
-# timed triggers are a list of lists in the form of time:action (time is 24 hour format)
+# timed triggers are a list of lists in the form of time, action, day type
+# time is 24 hour and can also take Sunrise and Sunset as a value
+# day type is optional and can be Weekdays or Weekend
+
 timedtriggers = [
                   ['3:00', 'GetSunriseSunset'],
-                  ['7:30', 'Brightness:255']
+                  ['8:00', 'ScreenOff', 'Weekdays'],
+                  ['Sunrise', 'ScreenOn', 'Weekdays'],
+                  ['Sunset', 'Brightness:175']
                 ] 
+# Weekdays and Weekend defined, if your system isn't using English use your local language
+weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+weekend = ['Saturday', 'Sunday']
 
 # if you want the script to trigger the Kodi weatherstation addon and update the weather window automatically, set to True
 # if set to False the Kodi weatherstation addon should be set to poll periodically for new data
@@ -40,5 +46,5 @@ kodiuri = 'localhost'
 kodiwsport = 9090
 
 # if you're testing on a non-RPi platform, setting to True will generate random data for
-# SenseHAT sensors and PiCamera light level. Requires reboot if changed.
+# SenseHAT sensors and PiCamera light level
 testmode = False

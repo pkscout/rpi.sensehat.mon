@@ -1,3 +1,7 @@
+v.1.1.0~beta1
+- added option to have timed triggers run on weekdays or weekends
+- sunrise and sunset are now timed triggers
+
 v.1.0.0
 - feature complete
 - see README.txt for features and usage details

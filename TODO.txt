@@ -5,7 +5,7 @@ NOW:
 nothing
 
 LATER:
-- add 'all', 'weekday', 'weekend' logic to auto dimming
+- have script send Kodi addon all data via Websockets
 
 
 For Kodi addon:
@@ -13,20 +13,12 @@ NOW:
 nothing
 
 LATER:
-nothing
+- update to accept data from Websockets
 
 
 For Kodi skin:
 NOW:
-when wake from sleep close the navigation menu
-make sleep overlay button black to finish blanking screen
+nothing
 
 LATER:
 nothing
-
-
-Notes on Auto Dimming:
-Have a Set of "Date" Types:
-All
-Weekday
-Weekend
