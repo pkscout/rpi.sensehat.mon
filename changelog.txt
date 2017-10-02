@@ -1,6 +1,7 @@
 v.1.1.0~beta1
 - added option to have timed triggers run on weekdays or weekends
 - sunrise and sunset are now timed triggers
+- added command line python script to change brightness
 
 v.1.0.0
 - feature complete
