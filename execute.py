@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.1.1.0~beta2
+# *  v.1.1.0~beta3
 # *  original RPi Weatherstation Lite code by pkscout
 
 import calendar, os, sys, time
@@ -68,11 +68,11 @@ class Main:
         self.AUTODIM = settings.autodim
         self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
         self.SCREENSTATE = 'On'
+        self.PRESSUREHISTORY = deque()
         self.SUNRISE = ''
         self.SUNSET = ''
         self.DARKRUN = False
         self.LIGHTRUN = False
-        self.PRESSUREHISTORY = deque()
 
 
     def Run( self ):
@@ -98,6 +98,7 @@ class Main:
             d_str = '%s;%s' % (d_str, item)
         d_str = d_str[1:]
         sensordata.log( [d_str] )
+        lw.log( ['wrote sensor data to sensorlog'] )
         jsondict = {'id':'1', 'jsonrpc':'2.0', 'method':'Addons.ExecuteAddon',
                     'params':{'addonid':'script.weatherstation.lite','params':{'action':'updatekodi', 'plugin':'rpi-weatherstation-lite','data':d_str}}
                    }
@@ -302,7 +303,8 @@ def RunInWebsockets():
         ws_conn = False
     lw.log( ['websocket status: ' + str( ws_conn )] )
     try:
-        gs.SetSunRiseSunset()
+        if ws.sock.connected:
+            gs.SetSunRiseSunset()
         while (not should_quit) and ws.sock.connected:
             gs.Run()
             lw.log( ['in websockets and waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )
@@ -319,13 +321,14 @@ if ( __name__ == "__main__" ):
     global ws_conn
     should_quit = False
     ws_conn = False
+    firstrun = True
     gs = Main()
     try:
         while not should_quit:
             if trigger_kodi:
                 for x in range( 1,6 ):
                     RunInWebsockets()
-                    if ws_conn:
+                    if ws_conn or not firstrun:
                         break
                     else:
                         lw.log( ['waiting 10 seconds then trying again'] )
@@ -334,6 +337,7 @@ if ( __name__ == "__main__" ):
                 ws_conn = False
                 gs.Run()
                 lw.log( ['waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )
+                firstrun = False
                 time.sleep( settings.readingdelta * 60 )
     except KeyboardInterrupt:
         pass
