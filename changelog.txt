@@ -1,5 +1,6 @@
 v.1.1.0~beta3
-- tries websocket connection persistently only at first start
+- script tries websocket connection persistently only at first start
+- change to autodim timing to fix communications with Kodi
 
 v.1.1.0~beta2
 - turned debug logging off by default

@@ -81,6 +81,7 @@ class Main:
         humidity = self.SENSOR.Humidity()
         pressure = self.SENSOR.Pressure()
         lightlevel = self.CAMERA.LightLevel()
+        self._autodim( lightlevel = lightlevel )
         s_data = []
         if temperature is not None:
             s_data.append( 'IndoorTemp:' + self._reading_to_str( temperature ) )
@@ -104,7 +105,6 @@ class Main:
                    }
         kodiupdate = _json.dumps( jsondict )
         self._sendjson( kodiupdate )
-        self._autodim( lightlevel = lightlevel )
 
 
     def HandleAction( self, action ):
