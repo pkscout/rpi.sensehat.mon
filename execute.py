@@ -6,6 +6,7 @@
 import calendar, os, sys, time
 from datetime import datetime
 from threading import Thread
+from collections import deque
 from resources.common.xlogger import Logger
 from resources.rpi.sensors import SenseHatSensors
 from resources.rpi.screens import RPiTouchscreen
@@ -14,14 +15,6 @@ if sys.version_info >= (2, 7):
     import json as _json
 else:
     import simplejson as _json
-
-
-p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
-lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ) )
-sensordata = Logger( logname = 'sensordata',
-                     logconfig = 'timed',
-                     format = '%(asctime)-15s %(message)s',
-                     logfile = os.path.join( p_folderpath, 'data', 'sensordata.log' ) )
 
 try:
     import data.settings as settings
@@ -33,27 +26,36 @@ try:
     settings.timedtriggers
     settings.weekdays
     settings.weekend
-    settings.trigger_kodi
+    settings.pressuredelta
+    settings.pressurerapid
+    settings.pressureregular
     settings.kodiuri
     settings.kodiwsport
+    settings.logbackups
     settings.testmode
 except (ImportError, AttributeError, NameError) as error:
     err_str = 'incomplete or no settings file found at %s' % os.path.join ( p_folderpath, 'data', 'settings.py' )
     lw.log( [err_str, 'script stopped'] )
     sys.exit( err_str )
 
-if settings.trigger_kodi:
-    if sys.version_info >= (2, 7):
-        import json as _json
-    else:
-        import simplejson as _json
-    try:
-        import websocket
-    except ImportError:
-        lw.log( ['websocket-client not installed, so the script cannot trigger Kodi weather window updates'] )
-        settings.trigger_kodi = False
+
+p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
+lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ), numbackups = settings.logbackups )
+sensordata = Logger( logname = 'sensordata',
+                     logconfig = 'timed', numbackups = settings.logbackups,
+                     format = '%(asctime)-15s %(message)s',
+                     logfile = os.path.join( p_folderpath, 'data', 'sensordata.log' ) )
+
+if sys.version_info >= (2, 7):
+    import json as _json
 else:
-    jsontrigger = ''
+    import simplejson as _json
+try:
+    import websocket
+    trigger_kodi = True
+except ImportError:
+    lw.log( ['websocket-client not installed, so the script cannot trigger Kodi weather window updates'] )
+    trigger_kodi = False
 
 
 
@@ -69,11 +71,7 @@ class Main:
         self.SUNSET = ''
         self.DARKRUN = False
         self.LIGHTRUN = False
-        jsondict = {'id':'1', 
-                    'jsonrpc':'2.0',
-                    'method':'Addons.ExecuteAddon',
-                    'params':{"addonid":"script.weatherstation.lite"}}
-        self.KODIUPDATE = _json.dumps( jsondict )
+        self.PRESSUREHISTORY = deque()
 
 
     def Run( self ):
@@ -89,16 +87,21 @@ class Main:
             s_data.append( 'IndoorHumidity:' + self._reading_to_str( humidity ) )
         if pressure is not None:
             s_data.append( 'IndoorPressure:' + self._reading_to_str( pressure ) )
+            s_data.append( 'PressureTrend:' + self._get_pressure_trend( pressure ) )
         s_data.append( 'AutoDim:' + str( self.AUTODIM ) )
         s_data.append( 'ScreenStatus:' + self.SCREENSTATE )
         if lightlevel is not None:
             s_data.append( 'LightLevel:' + self._reading_to_str( lightlevel ) )
         d_str = ''
         for item in s_data:
-            d_str = '%s\t%s' % (d_str, item)
-        lw.log( ['rounded data from sensor: ' + d_str] )
+            d_str = '%s;%s' % (d_str, item)
+        d_str = d_str[1:]
         sensordata.log( [d_str] )
-        self._sendjson( self.KODIUPDATE )
+        jsondict = {'id':'1', 'jsonrpc':'2.0', 'method':'Addons.ExecuteAddon',
+                    'params':{'addonid':'script.weatherstation.lite','params':{'action':'updatekodi', 'plugin':'rpi-weatherstation-lite','data':d_str}}
+                   }
+        kodiupdate = _json.dumps( jsondict )
+        self._sendjson( kodiupdate )
         self._autodim( lightlevel = lightlevel )
 
 
@@ -203,6 +206,23 @@ class Main:
             return '%s:%s' % (hour, hm[1])
 
 
+    def _get_pressure_trend( self, current_pressure ):
+        self.PRESSUREHISTORY.append( current_pressure )
+        if len( self.PRESSUREHISTORY ) > settings.pressuredelta / settings.readingdelta:
+            self.PRESSUREHISTORY.popleft()
+        previous_pressure = self.PRESSUREHISTORY[0]
+        diff = current_pressure - previous_pressure
+        if diff < 0:
+            direction = 'falling'
+        else:
+            direction = 'rising'
+        if abs( diff ) >= settings.pressurerapid:
+            return 'rapidly ' + direction
+        elif abs( diff ) >= settings.pressureregular:
+            return direction
+        return 'steady'
+
+    
     def _is_time( self, thetime, checkdays='' ):
         action_time = self._set_datetime( thetime )
         if not action_time:
@@ -224,7 +244,7 @@ class Main:
 
 
     def _sendjson( self, jdata ):
-        if settings.trigger_kodi and ws_conn:
+        if trigger_kodi and ws_conn:
             lw.log( ['sending Kodi ' + jdata] )
             ws.send( jdata )
 
@@ -238,7 +258,7 @@ class Main:
             fulldate = None
         return fulldate
 
-    
+
 
 def RunInWebsockets():
     def on_message( ws, message ):
@@ -301,7 +321,7 @@ if ( __name__ == "__main__" ):
     gs = Main()
     try:
         while not should_quit:
-            if settings.trigger_kodi:
+            if trigger_kodi:
                 for x in range( 1,6 ):
                     RunInWebsockets()
                     if ws_conn:

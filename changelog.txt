@@ -2,6 +2,8 @@ v.1.1.0~beta1
 - added option to have timed triggers run on weekdays or weekends
 - sunrise and sunset are now timed triggers
 - added command line python script to change brightness
+- now communicating data to Kodi via Websockets
+- pressure trend now calculated in script
 
 v.1.0.0
 - feature complete
