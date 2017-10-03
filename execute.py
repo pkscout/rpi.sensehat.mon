@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.1.1.0~beta1
+# *  v.1.1.0~beta2
 # *  original RPi Weatherstation Lite code by pkscout
 
 import calendar, os, sys, time
@@ -32,16 +32,17 @@ try:
     settings.kodiuri
     settings.kodiwsport
     settings.logbackups
+    settings.debug
     settings.testmode
 except (ImportError, AttributeError, NameError) as error:
     err_str = 'incomplete or no settings file found at %s' % os.path.join ( p_folderpath, 'data', 'settings.py' )
     lw.log( [err_str, 'script stopped'] )
     sys.exit( err_str )
 
-
 p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
-lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ), numbackups = settings.logbackups )
-sensordata = Logger( logname = 'sensordata',
+lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ),
+             numbackups = settings.logbackups, logdebug = str( settings.debug ) )
+sensordata = Logger( logname = 'sensordata', logdebug = str( settings.debug ),
                      logconfig = 'timed', numbackups = settings.logbackups,
                      format = '%(asctime)-15s %(message)s',
                      logfile = os.path.join( p_folderpath, 'data', 'sensordata.log' ) )
@@ -313,7 +314,7 @@ def RunInWebsockets():
 
 
 if ( __name__ == "__main__" ):
-    lw.log( ['script started'], 'info' )
+    lw.log( ['script started', 'debugging set to ' + str( settings.debug ) ], 'info' )
     global should_quit
     global ws_conn
     should_quit = False

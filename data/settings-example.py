@@ -31,13 +31,13 @@ timedtriggers = [
                 ] 
 # Weekdays and Weekend defined, if your system isn't using English use your local language
 weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-weekend = ['Saturday', 'Sunday']
+weekend  = ['Saturday', 'Sunday']
 
 # amount of time in minutes to look back at pressure history to determine pressure trend
 pressuredelta = 180
 
 # pressure in millibars that should be considered a rapid or regular change
-pressurerapid = 10
+pressurerapid   = 10
 pressureregular = 3
 
 # the URL Kodi remote command services are using (requires restart to take affect)
@@ -47,7 +47,10 @@ kodiuri = 'localhost'
 kodiwsport = 9090
 
 #number of sensor and script logs to keep (requires restart to take affect) 
-logbackups = 5
+logbackups = 0
+
+# for debugging you can get a more verbose log by setting this to True (requires restart to take affect)
+debug = False
 
 # if you're testing on a non-RPi platform, setting to True will generate random data for
 # SenseHAT sensors and PiCamera light level (requires restart to take affect)

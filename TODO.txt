@@ -5,7 +5,7 @@ NOW:
 nothing
 
 LATER:
-- have script send Kodi addon all data via Websockets
+nothing
 
 
 For Kodi addon:
@@ -13,8 +13,7 @@ NOW:
 nothing
 
 LATER:
-- update to accept data from Websockets
-
+nothing
 
 For Kodi skin:
 NOW:
