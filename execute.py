@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.1.1.0~beta3
+# *  v.1.1.0~beta4
 # *  original RPi Weatherstation Lite code by pkscout
 
 import calendar, os, sys, time
@@ -109,10 +109,10 @@ class Main:
 
     def HandleAction( self, action ):
         action = action.lower()
-        if action == 'brightnessup':
+        if action == 'brightnessup' and self.SCREENSTATE == 'On':
             self.SCREEN.AdjustBrightness( direction='up' )
             lw.log( ['turned brightness up'] )
-        elif action == 'brightnessdown':
+        elif action == 'brightnessdown' and self.SCREENSTATE == 'On':
             self.SCREEN.AdjustBrightness( direction='down' )
             lw.log( ['turned brightness down'] )
         elif action == 'autodimon':
@@ -121,29 +121,28 @@ class Main:
         elif action == 'autodimoff':
             self.AUTODIM = False
             lw.log( ['turned autodim off'] )
-        elif action.startswith( 'screenon' ):
-            if self.SCREENSTATE == 'Off':
-                sb = action.split( ':' )
-                try:
-                    brightness = sb[1]
-                except IndexError:
-                    brightness = self.STOREDBRIGHTNESS
-                self.SCREEN.SetBrightness( brightness = brightness )
-                self.SCREENSTATE = 'On'
-                lw.log( ['turned screen on to brightness of ' + str( brightness )] )
-        elif action == 'screenoff':
-            if self.SCREENSTATE == 'On':
-                self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
-                self.SCREEN.SetBrightness( brightness = 11 )
-                self.SCREENSTATE = 'Off'
-                lw.log( ['turned screen off and saved brightness as ' + str( self.STOREDBRIGHTNESS )] )
-        elif action.startswith( 'brightness:' ):
+        elif action.startswith( 'screenon' ) and self.SCREENSTATE == 'Off':
+            sb = action.split( ':' )
+            try:
+                brightness = sb[1]
+            except IndexError:
+                brightness = self.STOREDBRIGHTNESS
+            self.SCREEN.SetBrightness( brightness = brightness )
+            self.SCREENSTATE = 'On'
+            lw.log( ['turned screen on to brightness of ' + str( brightness )] )
+        elif action == 'screenoff' and self.SCREENSTATE == 'On':
+            self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
+            self.SCREEN.SetBrightness( brightness = 11 )
+            self.SCREENSTATE = 'Off'
+            lw.log( ['turned screen off and saved brightness as ' + str( self.STOREDBRIGHTNESS )] )
+        elif action.startswith( 'brightness:' ) and self.SCREENSTATE == 'On':
             try:
                 level = int( action.split(':')[1] )
             except ValueError:
                 level = None
             if level:
                 self.SCREEN.SetBrightness( brightness = level )
+                lw.log( ['set brightness to ' + str( level )] )
         elif action == 'getsunrisesunset':
             self.SetSunRiseSunset()
 

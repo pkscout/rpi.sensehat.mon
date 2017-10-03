@@ -1,3 +1,6 @@
+v.1.1.0~beta4
+- changed handlers so screen brightness can't be set of screenstate is OFF
+
 v.1.1.0~beta3
 - script tries websocket connection persistently only at first start
 - change to autodim timing to fix communications with Kodi
