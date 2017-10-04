@@ -1,3 +1,6 @@
+v.1.1.0~beta6
+- fix for crash if settings file is missing or incomplete
+
 v.1.1.0~beta5
 - setting brightness when screen is off now stores new brightness level to be used later
 

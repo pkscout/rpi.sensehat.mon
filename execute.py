@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.1.1.0~beta5
+# *  v.1.1.0~beta6
 # *  original RPi Weatherstation Lite code by pkscout
 
 import calendar, os, sys, time
@@ -15,6 +15,8 @@ if sys.version_info >= (2, 7):
     import json as _json
 else:
     import simplejson as _json
+
+p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
 
 try:
     import data.settings as settings
@@ -32,20 +34,24 @@ try:
     settings.kodiuri
     settings.kodiwsport
     settings.logbackups
-    settings.debug
+    debug = settings.debug
     settings.testmode
+    err = False
 except (ImportError, AttributeError, NameError) as error:
-    err_str = 'incomplete or no settings file found at %s' % os.path.join ( p_folderpath, 'data', 'settings.py' )
-    lw.log( [err_str, 'script stopped'] )
-    sys.exit( err_str )
+    err_str = 'incomplete or no settings file found at ' + os.path.join ( p_folderpath, 'data', 'settings.py' )
+    err = True
+    debug = True
 
-p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
 lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ),
-             numbackups = settings.logbackups, logdebug = str( settings.debug ) )
-sensordata = Logger( logname = 'sensordata', logdebug = str( settings.debug ),
+             numbackups = settings.logbackups, logdebug = str( debug ) )
+sensordata = Logger( logname = 'sensordata', logdebug = str( debug ),
                      logconfig = 'timed', numbackups = settings.logbackups,
                      format = '%(asctime)-15s %(message)s',
                      logfile = os.path.join( p_folderpath, 'data', 'sensordata.log' ) )
+
+if err:
+    lw.log( [err_str, 'script stopped'] )
+    sys.exit( err_str )
 
 if sys.version_info >= (2, 7):
     import json as _json
