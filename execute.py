@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.1.1.0~beta4
+# *  v.1.1.0~beta5
 # *  original RPi Weatherstation Lite code by pkscout
 
 import calendar, os, sys, time
@@ -135,14 +135,18 @@ class Main:
             self.SCREEN.SetBrightness( brightness = 11 )
             self.SCREENSTATE = 'Off'
             lw.log( ['turned screen off and saved brightness as ' + str( self.STOREDBRIGHTNESS )] )
-        elif action.startswith( 'brightness:' ) and self.SCREENSTATE == 'On':
+        elif action.startswith( 'brightness:' ):
             try:
                 level = int( action.split(':')[1] )
             except ValueError:
                 level = None
             if level:
-                self.SCREEN.SetBrightness( brightness = level )
-                lw.log( ['set brightness to ' + str( level )] )
+                if  self.SCREENSTATE == 'On':
+                    self.SCREEN.SetBrightness( brightness = level )
+                    lw.log( ['set brightness to ' + str( level )] )
+                else:
+                    self.STOREDBRIGHTNESS = level
+                    lw.log( ['screen is off, so set stored brightness to ' + str( level )] )
         elif action == 'getsunrisesunset':
             self.SetSunRiseSunset()
 
