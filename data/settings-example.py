@@ -2,8 +2,9 @@
 readingdelta = 2
 
 # color settings for status lights
-# acceptable colors are green, yellow, blue, red, white, nothing, pink
+# acceptable color names are green, yellow, blue, red, white, nothing, pink
 # use nothing for all colors if you want the LED off
+# you can also use any RGB value as a tuple (255, 255, 255) is white
 script_running = 'green'
 kodi_connection = 'blue'
 no_kodi_connection = 'red'

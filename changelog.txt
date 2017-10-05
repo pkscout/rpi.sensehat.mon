@@ -1,3 +1,6 @@
+v.1.1.0~beta8
+- added option to use any tuple for color choices in LED
+
 v.1.1.0~beta7
 - added code to control SenseHat LED to provide some feedback
 

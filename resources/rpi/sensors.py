@@ -90,7 +90,15 @@ class SenseHatLED:
 
 
     def Color( self, color ):
-        return self.PALETTE[color.lower()]
+        if isinstance( color, basestring ):
+            print 'retuning color from palette'
+            return self.PALETTE[color.lower()]
+        elif isinstance( color, tuple ):
+            if len( color ) == 3:
+               print 'returning original color'
+               return color
+        print 'returning default'
+        return (255, 255, 255)
 
 
     def PixelOff( self, x, y ):

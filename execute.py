@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.1.1.0~beta7
+# *  v.1.1.0~beta8
 # *  original RPi Weatherstation Lite code by pkscout
 
 import calendar, os, sys, time
