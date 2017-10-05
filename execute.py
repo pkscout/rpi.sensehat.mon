@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.1.1.0~beta6
+# *  v.1.1.0~beta7
 # *  original RPi Weatherstation Lite code by pkscout
 
 import calendar, os, sys, time
@@ -8,7 +8,7 @@ from datetime import datetime
 from threading import Thread
 from collections import deque
 from resources.common.xlogger import Logger
-from resources.rpi.sensors import SenseHatSensors
+from resources.rpi.sensors import SenseHatSensors, SenseHatLED
 from resources.rpi.screens import RPiTouchscreen
 from resources.rpi.cameras import RPiCamera
 if sys.version_info >= (2, 7):
@@ -21,6 +21,9 @@ p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
 try:
     import data.settings as settings
     settings.readingdelta
+    settings.script_running
+    settings.kodi_connection
+    settings.no_kodi_connection
     settings.autodim
     settings.dark
     settings.light
@@ -81,8 +84,9 @@ class Main:
         self.LIGHTRUN = False
 
 
-    def Run( self ):
+    def Run( self, ledcolor=(255, 255, 255) ):
         reload(settings)
+        led.PixelOn( 0, 0, ledcolor )
         temperature = self.SENSOR.Temperature()
         humidity = self.SENSOR.Humidity()
         pressure = self.SENSOR.Pressure()
@@ -110,7 +114,9 @@ class Main:
                     'params':{'addonid':'script.weatherstation.lite','params':{'action':'updatekodi', 'plugin':'rpi-weatherstation-lite','data':d_str}}
                    }
         kodiupdate = _json.dumps( jsondict )
+        led.Sweep( start = 1, color = ledcolor, vertical = True )
         self._sendjson( kodiupdate )
+
 
 
     def HandleAction( self, action ):
@@ -315,7 +321,7 @@ def RunInWebsockets():
         if ws.sock.connected:
             gs.SetSunRiseSunset()
         while (not should_quit) and ws.sock.connected:
-            gs.Run()
+            gs.Run( ledcolor = led.Color( settings.kodi_connection ) )
             lw.log( ['in websockets and waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )
             time.sleep( settings.readingdelta * 60 )
     except KeyboardInterrupt:
@@ -331,6 +337,9 @@ if ( __name__ == "__main__" ):
     should_quit = False
     ws_conn = False
     firstrun = True
+    led = SenseHatLED()
+    led.PixelOn( 0, 7, led.Color( settings.script_running ) )
+    led.PixelOn( 0, 0, led.Color( settings.no_kodi_connection ) )
     gs = Main()
     try:
         while not should_quit:
@@ -344,12 +353,13 @@ if ( __name__ == "__main__" ):
                         time.sleep( 10 )
             if not should_quit:
                 ws_conn = False
-                gs.Run()
+                gs.Run( ledcolor = led.Color( settings.no_kodi_connection ) )
                 lw.log( ['waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )
                 firstrun = False
                 time.sleep( settings.readingdelta * 60 )
     except KeyboardInterrupt:
         pass
+    led.ClearPanel()
     lw.log( ['script finished'], 'info' )
 
 

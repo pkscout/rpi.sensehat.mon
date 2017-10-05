@@ -1,6 +1,13 @@
 # amount of time between sensor readings (in minutes)
 readingdelta = 2
 
+# color settings for status lights
+# acceptable colors are green, yellow, blue, red, white, nothing, pink
+# use nothing for all colors if you want the LED off
+script_running = 'green'
+kodi_connection = 'blue'
+no_kodi_connection = 'red'
+
 # whether autodim is enabled at restart (requires restart to take affect)
 # the dark and light auto dim functions require Raspberry Pi camera
 autodim = True
