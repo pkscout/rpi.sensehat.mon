@@ -1,8 +1,9 @@
 # *  Credits:
 # *
-# *  v.1.1.0~beta8
+# *  v.1.1.0~beta9
 # *  original RPi Weatherstation Lite code by pkscout
 
+import data.config as config
 import calendar, os, sys, time
 from datetime import datetime
 from threading import Thread
@@ -17,64 +18,29 @@ else:
     import simplejson as _json
 
 p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
-
-try:
-    import data.settings as settings
-    settings.readingdelta
-    settings.script_running
-    settings.kodi_connection
-    settings.no_kodi_connection
-    settings.autodim
-    settings.dark
-    settings.light
-    settings.specialtriggers
-    settings.timedtriggers
-    settings.weekdays
-    settings.weekend
-    settings.pressuredelta
-    settings.pressurerapid
-    settings.pressureregular
-    settings.kodiuri
-    settings.kodiwsport
-    settings.logbackups
-    debug = settings.debug
-    settings.testmode
-    err = False
-except (ImportError, AttributeError, NameError) as error:
-    err_str = 'incomplete or no settings file found at ' + os.path.join ( p_folderpath, 'data', 'settings.py' )
-    err = True
-    debug = True
-
+debug = config.Get( 'debug' )
 lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ),
-             numbackups = settings.logbackups, logdebug = str( debug ) )
+             numbackups = config.Get( 'logbackups' ), logdebug = str( debug ) )
 sensordata = Logger( logname = 'sensordata', logdebug = str( debug ),
-                     logconfig = 'timed', numbackups = settings.logbackups,
+                     logconfig = 'timed', numbackups = config.Get( 'logbackups' ),
                      format = '%(asctime)-15s %(message)s',
                      logfile = os.path.join( p_folderpath, 'data', 'sensordata.log' ) )
 
-if err:
-    lw.log( [err_str, 'script stopped'] )
-    sys.exit( err_str )
-
-if sys.version_info >= (2, 7):
-    import json as _json
-else:
-    import simplejson as _json
 try:
     import websocket
     trigger_kodi = True
 except ImportError:
-    lw.log( ['websocket-client not installed, so the script cannot trigger Kodi weather window updates'] )
+    lw.log( ['websocket-client not installed, so the script cannot trigger Kodi weather window updates'], 'info' )
     trigger_kodi = False
 
 
 
 class Main:
     def __init__( self ):
-        self.SENSOR = SenseHatSensors( testmode = settings.testmode )
-        self.SCREEN = RPiTouchscreen( testmode = settings.testmode )
-        self.CAMERA = RPiCamera( testmode = settings.testmode )
-        self.AUTODIM = settings.autodim
+        self.SENSOR = SenseHatSensors( testmode = config.Get( 'testmode' ) )
+        self.SCREEN = RPiTouchscreen( testmode = config.Get( 'testmode' ) )
+        self.CAMERA = RPiCamera( testmode = config.Get( 'testmode' ) )
+        self.AUTODIM = config.Get( 'autodim' )
         self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
         self.SCREENSTATE = 'On'
         self.PRESSUREHISTORY = deque()
@@ -85,7 +51,7 @@ class Main:
 
 
     def Run( self, ledcolor=(255, 255, 255) ):
-        reload(settings)
+        config.Reload()
         led.PixelOn( 0, 0, ledcolor )
         temperature = self.SENSOR.Temperature()
         humidity = self.SENSOR.Humidity()
@@ -184,22 +150,22 @@ class Main:
         do_dark = False
         do_light = False
         if lightlevel:
-            if lightlevel <= settings.dark:
+            if lightlevel <= config.Get( 'dark' ):
                 do_dark = True
-            if lightlevel >= settings.light:
+            if lightlevel >= config.Get( 'light' ):
                 do_light = True
         if do_dark and not self.DARKRUN:
-            lw.log( ['dark trigger activated with ' + settings.specialtriggers.get( 'dark' )] )
-            self.HandleAction( settings.specialtriggers.get( 'dark' ) )
+            lw.log( ['dark trigger activated with ' + config.Get( specialtriggers ).get( 'dark' )] )
+            self.HandleAction( config.Get( 'specialtriggers' ).get( 'dark' ) )
             self.DARKRUN = True
             self.LIGHTRUN = False
         elif do_light and not self.LIGHTRUN:
-            lw.log( ['light trigger activated with ' + settings.specialtriggers.get( 'light' )] )
-            self.HandleAction( settings.specialtriggers.get( 'light' ) )
+            lw.log( ['light trigger activated with ' + config.Get( 'specialtriggers' ).get( 'light' )] )
+            self.HandleAction( config.Get( 'specialtriggers' ).get( 'light' ) )
             self.DARKRUN = False
             self.LIGHTRUN = True
         else:
-            for onetrigger in settings.timedtriggers:
+            for onetrigger in config.Get( 'timedtriggers' ):
                 if onetrigger[0].lower() == 'sunrise':
                     onetrigger[0] = self.SUNRISE
                 if onetrigger[0].lower() == 'sunset':
@@ -225,7 +191,7 @@ class Main:
 
     def _get_pressure_trend( self, current_pressure ):
         self.PRESSUREHISTORY.append( current_pressure )
-        if len( self.PRESSUREHISTORY ) > settings.pressuredelta / settings.readingdelta:
+        if len( self.PRESSUREHISTORY ) > config.Get( 'pressuredelta' ) / config.Get( 'readingdelta' ):
             self.PRESSUREHISTORY.popleft()
         previous_pressure = self.PRESSUREHISTORY[0]
         diff = current_pressure - previous_pressure
@@ -233,9 +199,9 @@ class Main:
             direction = 'falling'
         else:
             direction = 'rising'
-        if abs( diff ) >= settings.pressurerapid:
+        if abs( diff ) >= config.Get( 'pressurerapid' ):
             return 'rapidly ' + direction
-        elif abs( diff ) >= settings.pressureregular:
+        elif abs( diff ) >= config.Get( 'pressureregular' ):
             return direction
         return 'steady'
 
@@ -244,13 +210,13 @@ class Main:
         action_time = self._set_datetime( thetime )
         if not action_time:
             return False
-        elif checkdays.lower().startswith( 'weekday' ) and not calendar.day_name[action_time.weekday()] in settings.weekdays:
+        elif checkdays.lower().startswith( 'weekday' ) and not calendar.day_name[action_time.weekday()] in config.Get( 'weekdays' ):
             return False
-        elif checkdays.lower == 'weekend' and not calendar.day_name[action_time.weekday()] in settings.weekend:
+        elif checkdays.lower().startswith( 'weekend' ) and not calendar.day_name[action_time.weekday()] in config.Get( 'weekend' ):
             return False  
         rightnow = datetime.now()
         action_diff = rightnow - action_time
-        if abs( action_diff.total_seconds() ) < settings.readingdelta * 30: # so +/- window is total readingdelta
+        if abs( action_diff.total_seconds() ) < config.Get( 'readingdelta' ) * 30: # so +/- window is total' ) readingdelta
             return True
         else:
             return False
@@ -302,7 +268,7 @@ def RunInWebsockets():
     global should_quit
     global ws
     global ws_conn
-    kodiurl = 'ws://%s:%s/jsponrpc' % (settings.kodiuri, settings.kodiwsport )
+    kodiurl = 'ws://%s:%s/jsponrpc' % (config.Get( 'kodiuri' ), config.Get( 'kodiwsport' ) )
     ws = websocket.WebSocketApp( kodiurl, on_message = on_message, on_error = on_error, on_open = on_open, on_close = on_close )
     wst = Thread( target = ws.run_forever )
     wst.setDaemon( True )
@@ -321,9 +287,9 @@ def RunInWebsockets():
         if ws.sock.connected:
             gs.SetSunRiseSunset()
         while (not should_quit) and ws.sock.connected:
-            gs.Run( ledcolor = led.Color( settings.kodi_connection ) )
-            lw.log( ['in websockets and waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )
-            time.sleep( settings.readingdelta * 60 )
+            gs.Run( ledcolor = led.Color( config.Get( 'kodi_connection' ) ) )
+            lw.log( ['in websockets and waiting %s minutes before reading from sensor again' % str( config.Get( 'readingdelta' ) )] )
+            time.sleep( config.Get( 'readingdelta' ) * 60 )
     except KeyboardInterrupt:
         should_quit = True
     except AttributeError:
@@ -331,15 +297,15 @@ def RunInWebsockets():
 
 
 if ( __name__ == "__main__" ):
-    lw.log( ['script started', 'debugging set to ' + str( settings.debug ) ], 'info' )
+    lw.log( ['script started', 'debugging set to ' + str( config.Get( 'debug') ) ], 'info' )
     global should_quit
     global ws_conn
     should_quit = False
     ws_conn = False
     firstrun = True
     led = SenseHatLED()
-    led.PixelOn( 0, 7, led.Color( settings.script_running ) )
-    led.PixelOn( 0, 0, led.Color( settings.no_kodi_connection ) )
+    led.PixelOn( 0, 7, led.Color( config.Get( 'script_running' ) ) )
+    led.PixelOn( 0, 0, led.Color( config.Get( 'no_kodi_connection' ) ) )
     gs = Main()
     try:
         while not should_quit:
@@ -353,10 +319,10 @@ if ( __name__ == "__main__" ):
                         time.sleep( 10 )
             if not should_quit:
                 ws_conn = False
-                gs.Run( ledcolor = led.Color( settings.no_kodi_connection ) )
-                lw.log( ['waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )
+                gs.Run( ledcolor = led.Color( config.Get( 'no_kodi_connection' ) ) )
+                lw.log( ['waiting %s minutes before reading from sensor again' % str( config.Get( 'readingdelta' ) )] )
                 firstrun = False
-                time.sleep( settings.readingdelta * 60 )
+                time.sleep( config.Get( 'readingdelta' ) * 60 )
     except KeyboardInterrupt:
         pass
     led.ClearPanel()

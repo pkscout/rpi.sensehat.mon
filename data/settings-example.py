@@ -34,9 +34,13 @@ specialtriggers = { 'dark': 'ScreenOff',
 # day type is optional and can be Weekdays or Weekend
 timedtriggers = [
                   ['3:00', 'GetSunriseSunset'],
-                  ['Sunrise', 'ScreenOn', 'Weekdays'],
-                  ['Sunset', 'Brightness:175']
+                  ['Sunrise', 'ScreenOn'],
+                  ['8:00', 'Brightness:200'],
+                  ['9:00', 'None', 'Weekend'],
+                  ['14:00', 'None', 'Weekdays'],
+                  ['Sunset', 'Brightness:100']
                 ] 
+
 # Weekdays and Weekend defined, if your system isn't using English use your local language
 weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 weekend  = ['Saturday', 'Sunday']

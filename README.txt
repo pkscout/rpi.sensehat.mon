@@ -35,11 +35,10 @@ It is recommended you install this in /home/pi.  The Kodi companion addon assume
 
 
 CONFIGURATION:
-In the data directory of the script there is a file called settings-example.py. Rename it to settings.py, review it, and make changes as needed.  If you're not sure what a setting does even after reading the comments in the settings.py file, you can probably leave it at the default.
-
+You can run this without further configuration.  If you want to see all how all the settings are set by default, you can look at settings-example.py.  If you want to change any of the defaults, you can either create a new file called settings.py and copy and paste the specific setting(s) you want to change from settings-example.py OR you can copy settings-example.py to settings.py and edit that file.
 
 ABOUT AUTO DIMMING:
-Auto dimming (which is enabled by default) allows you to do certain actions based on given triggers or times.  In the settings files there are special triggers and time triggers.  There are two special triggers: dark, light (these require a functioning RPi camera to do anything).  You can set the light level thresholds in the settings (0 is no light, 255 is looking straight at the sun).  Time triggers can accept any 24 hour formatted time as well as the keywords Sunrise and Sunset (those times are provided by Kodi via one of its weather plugins).  Time triggers can also be set to run only on weekdays or weekends.
+Auto dimming allows you to do certain actions based on given triggers or times.  Auto dim understands special triggers and time based triggers.  There are two special triggers: dark, light (these require a functioning RPi camera to do anything).  You can change the light level thresholds if needed.  Time triggers can accept any 24 hour formatted time as well as the keywords Sunrise and Sunset (those times are provided by Kodi via one of its weather plugins).  Time triggers can also be set to run only on weekdays or the weekend.  See settings-example.py for the exact format for timed triggers.
 
 
 USAGE:
