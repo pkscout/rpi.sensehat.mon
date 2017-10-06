@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.1.1.0~beta10
+# *  v.1.1.0~beta11
 # *  original RPi Weatherstation Lite code by pkscout
 
 import data.config as config
@@ -50,14 +50,51 @@ class Main:
         self.LIGHTRUN = False
 
 
+    def AutoDim( self ):
+        while True:
+            if self.AUTODIM:
+                lightlevel = self.CAMERA.LightLevel()
+                do_dark = False
+                do_light = False
+                if lightlevel:
+                    if lightlevel <= config.Get( 'dark' ):
+                        do_dark = True
+                    if lightlevel >= config.Get( 'light' ):
+                        do_light = True
+                if do_dark and not self.DARKRUN:
+                    lw.log( ['dark trigger activated with ' + config.Get( 'specialtriggers' ).get( 'dark' )] )
+                    self.HandleAction( config.Get( 'specialtriggers' ).get( 'dark' ) )
+                    self.DARKRUN = True
+                    self.LIGHTRUN = False
+                elif do_light and not self.LIGHTRUN:
+                    lw.log( ['light trigger activated with ' + config.Get( 'specialtriggers' ).get( 'light' )] )
+                    self.HandleAction( config.Get( 'specialtriggers' ).get( 'light' ) )
+                    self.DARKRUN = False
+                    self.LIGHTRUN = True
+                else:
+                    triggers = config.Get( 'timedtriggers' )
+                    triggers.append( [config.Get( 'fetchsuntime' ), 'GetSunriseSunset'] )
+                    for onetrigger in triggers:
+                        if onetrigger[0].lower() == 'sunrise':
+                            onetrigger[0] = self.SUNRISE
+                        if onetrigger[0].lower() == 'sunset':
+                            onetrigger[0] = self.SUNSET
+                        try:
+                            checkdays = onetrigger[2]
+                        except IndexError:
+                            checkdays = ''
+                        if self._is_time( onetrigger[0], checkdays = checkdays ):
+                            lw.log( ['timed trigger %s activated with %s' % (onetrigger[0], onetrigger[1])] )
+                            self.HandleAction( onetrigger[1] )
+            time.sleep( config.Get( 'autodimdelta' ) * 60 )
+
+
     def Run( self, ledcolor=(255, 255, 255) ):
         config.Reload()
         led.PixelOn( 0, 0, ledcolor )
         temperature = self.SENSOR.Temperature()
         humidity = self.SENSOR.Humidity()
         pressure = self.SENSOR.Pressure()
-        lightlevel = self.CAMERA.LightLevel()
-        self._autodim( lightlevel = lightlevel )
         s_data = []
         if temperature is not None:
             s_data.append( 'IndoorTemp:' + self._reading_to_str( temperature ) )
@@ -68,8 +105,6 @@ class Main:
             s_data.append( 'PressureTrend:' + self._get_pressure_trend( pressure ) )
         s_data.append( 'AutoDim:' + str( self.AUTODIM ) )
         s_data.append( 'ScreenStatus:' + self.SCREENSTATE )
-        if lightlevel is not None:
-            s_data.append( 'LightLevel:' + self._reading_to_str( lightlevel ) )
         d_str = ''
         for item in s_data:
             d_str = '%s;%s' % (d_str, item)
@@ -144,41 +179,6 @@ class Main:
             self._sendjson( kodiquery )
 
 
-    def _autodim( self, lightlevel ):
-        if not self.AUTODIM:
-            return
-        do_dark = False
-        do_light = False
-        if lightlevel:
-            if lightlevel <= config.Get( 'dark' ):
-                do_dark = True
-            if lightlevel >= config.Get( 'light' ):
-                do_light = True
-        if do_dark and not self.DARKRUN:
-            lw.log( ['dark trigger activated with ' + config.Get( 'specialtriggers' ).get( 'dark' )] )
-            self.HandleAction( config.Get( 'specialtriggers' ).get( 'dark' ) )
-            self.DARKRUN = True
-            self.LIGHTRUN = False
-        elif do_light and not self.LIGHTRUN:
-            lw.log( ['light trigger activated with ' + config.Get( 'specialtriggers' ).get( 'light' )] )
-            self.HandleAction( config.Get( 'specialtriggers' ).get( 'light' ) )
-            self.DARKRUN = False
-            self.LIGHTRUN = True
-        else:
-            for onetrigger in config.Get( 'timedtriggers' ):
-                if onetrigger[0].lower() == 'sunrise':
-                    onetrigger[0] = self.SUNRISE
-                if onetrigger[0].lower() == 'sunset':
-                    onetrigger[0] = self.SUNSET
-                try:
-                    checkdays = onetrigger[2]
-                except IndexError:
-                    checkdays = ''
-                if self._is_time( onetrigger[0], checkdays = checkdays ):
-                    lw.log( ['timed trigger %s activated with %s' % (onetrigger[0], onetrigger[1])] )
-                    self.HandleAction( onetrigger[1] )
-
-
     def _convert_to_24_hour( self, timestr ):
         time_split = timestr.split( ' ' )
         if time_split[1] == 'AM':
@@ -216,7 +216,7 @@ class Main:
             return False  
         rightnow = datetime.now()
         action_diff = rightnow - action_time
-        if abs( action_diff.total_seconds() ) < config.Get( 'readingdelta' ) * 30: # so +/- window is total' ) readingdelta
+        if abs( action_diff.total_seconds() ) < config.Get( 'autodimdelta' ) * 30: # so +/- window is total' ) readingdelta
             return True
         else:
             return False
@@ -307,6 +307,9 @@ if ( __name__ == "__main__" ):
     led.PixelOn( 0, 7, led.Color( config.Get( 'script_running' ) ) )
     led.PixelOn( 0, 0, led.Color( config.Get( 'no_kodi_connection' ) ) )
     gs = Main()
+    adt = Thread( target = gs.AutoDim )
+    adt.setDaemon( True )
+    adt.start()
     try:
         while not should_quit:
             if trigger_kodi:

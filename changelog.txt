@@ -1,3 +1,8 @@
+v.1.1.0~beta11
+- moved autodim to separate thread
+- sensor checks and autodim checks now run on separate schedules
+- moved fetch of sunrise/sunset times to dedicated setting
+
 v.1.1.0~beta10
 - fix for crash on dark
 

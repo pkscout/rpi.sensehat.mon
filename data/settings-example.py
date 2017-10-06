@@ -13,6 +13,9 @@ no_kodi_connection = 'red'
 # the dark and light auto dim functions require Raspberry Pi camera
 autodim = True
 
+# amount of time (in minutes) between auto dim checks
+autodimdelta = 0.5
+
 # for autodim there are specific actions you can assign:
 # GetSunriseSunset, ScreenOn, ScreenOff, Brightness:xxx
 # for Brightness (and optionally for ScreenOn) :xxx is a number indicating the brightness to set
@@ -25,6 +28,9 @@ autodim = True
 dark = 10
 light = 50
 
+# time (24 hour format) the updated sunrise and sunset should be fetched
+fetchsuntime = '3:00'
+
 # special triggers for autodim
 specialtriggers = { 'dark': 'ScreenOff',
                     'light': 'ScreenOn' }
@@ -33,7 +39,6 @@ specialtriggers = { 'dark': 'ScreenOff',
 # time is 24 hour and can also take Sunrise and Sunset as a value
 # day type is optional and can be Weekdays or Weekend
 timedtriggers = [
-                  ['3:00', 'GetSunriseSunset'],
                   ['Sunrise', 'ScreenOn'],
                   ['8:00', 'Brightness:200'],
                   ['9:00', 'None', 'Weekend'],
