@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.1.1.0~beta9
+# *  v.1.1.0~beta10
 # *  original RPi Weatherstation Lite code by pkscout
 
 import data.config as config
@@ -155,7 +155,7 @@ class Main:
             if lightlevel >= config.Get( 'light' ):
                 do_light = True
         if do_dark and not self.DARKRUN:
-            lw.log( ['dark trigger activated with ' + config.Get( specialtriggers ).get( 'dark' )] )
+            lw.log( ['dark trigger activated with ' + config.Get( 'specialtriggers' ).get( 'dark' )] )
             self.HandleAction( config.Get( 'specialtriggers' ).get( 'dark' ) )
             self.DARKRUN = True
             self.LIGHTRUN = False

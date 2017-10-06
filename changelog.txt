@@ -1,3 +1,6 @@
+v.1.1.0~beta10
+- fix for crash on dark
+
 v.1.1.0~beta9
 - refactored settings so defaults are stored in code and can be overridden
   (instead of requiring a settings file to be present)
