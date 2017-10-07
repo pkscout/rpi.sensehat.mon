@@ -53,7 +53,10 @@ class Main:
     def AutoDim( self ):
         while True:
             if self.AUTODIM:
+                lw.log( ['checking autodim'] )
                 lightlevel = self.CAMERA.LightLevel()
+                lw.log( ['got back %s from camera' % str( lightlevel )] )
+                css = self.SCREENSTATE
                 do_dark = False
                 do_light = False
                 if lightlevel:
@@ -86,6 +89,8 @@ class Main:
                         if self._is_time( onetrigger[0], checkdays = checkdays ):
                             lw.log( ['timed trigger %s activated with %s' % (onetrigger[0], onetrigger[1])] )
                             self.HandleAction( onetrigger[1] )
+                if css <> self.SCREENSTATE:
+                    self.SendJson( type = 'update', data = 'ScreenStatus:' + self.SCREENSTATE )
             time.sleep( config.Get( 'autodimdelta' ) * 60 )
 
 
@@ -103,20 +108,16 @@ class Main:
         if pressure is not None:
             s_data.append( 'IndoorPressure:' + self._reading_to_str( pressure ) )
             s_data.append( 'PressureTrend:' + self._get_pressure_trend( pressure ) )
-        s_data.append( 'AutoDim:' + str( self.AUTODIM ) )
-        s_data.append( 'ScreenStatus:' + self.SCREENSTATE )
+#        s_data.append( 'AutoDim:' + str( self.AUTODIM ) )
+#        s_data.append( 'ScreenStatus:' + self.SCREENSTATE )
         d_str = ''
         for item in s_data:
             d_str = '%s;%s' % (d_str, item)
         d_str = d_str[1:]
         sensordata.log( [d_str] )
         lw.log( ['wrote sensor data to sensorlog'] )
-        jsondict = {'id':'1', 'jsonrpc':'2.0', 'method':'Addons.ExecuteAddon',
-                    'params':{'addonid':'script.weatherstation.lite','params':{'action':'updatekodi', 'plugin':'rpi-weatherstation-lite','data':d_str}}
-                   }
-        kodiupdate = _json.dumps( jsondict )
         led.Sweep( start = 1, color = ledcolor, vertical = True )
-        self._sendjson( kodiupdate )
+        self.SendJson( type = 'update', data = d_str )
 
 
 
@@ -164,6 +165,22 @@ class Main:
             self.SetSunRiseSunset()
 
 
+    def SendJson( self, type, data ):
+        jdata = None
+        if type.lower() == 'update':
+            jsondict = { 'id':'1', 'jsonrpc':'2.0', 'method':'Addons.ExecuteAddon',
+                         'params':{'addonid':'script.weatherstation.lite','params':{'action':'updatekodi',
+                         'plugin':'rpi-weatherstation-lite','data':data}} }
+        elif type.lower() == 'infolabelquery':
+            jsondict = { 'id':'2', 'jsonrpc':'2.0',  'method':'XBMC.GetInfoLabels',
+                         'params':{'labels':data} }
+            kodiquery = _json.dumps( jsondict )
+        if trigger_kodi and ws_conn and jsondict:
+            jdata = _json.dumps( jsondict )
+            lw.log( ['sending Kodi ' + jdata] )
+            ws.send( jdata )
+
+
     def SetSunRiseSunset( self, jsonresult = {} ):
         if jsonresult:
             self.SUNRISE = self._convert_to_24_hour( jsonresult.get( 'Window(Weather).Property(Today.Sunrise)' ) )
@@ -173,10 +190,8 @@ class Main:
             if not self.AUTODIM:
                 return
             lw.log( ['getting sunrise and sunset times from Kodi'] )
-            jsondict = { 'id':'2', 'jsonrpc':'2.0',  'method':'XBMC.GetInfoLabels',
-                         'params':{'labels':['Window(Weather).Property(Today.Sunrise)', 'Window(Weather).Property(Today.Sunset)']} }
-            kodiquery = _json.dumps( jsondict )
-            self._sendjson( kodiquery )
+            self.SendJson( type = 'infolabelquery',
+                           data = ['Window(Weather).Property(Today.Sunrise)', 'Window(Weather).Property(Today.Sunset)'] )
 
 
     def _convert_to_24_hour( self, timestr ):
@@ -224,12 +239,6 @@ class Main:
 
     def _reading_to_str( self, reading ):
         return str( int( round( reading ) ) )
-
-
-    def _sendjson( self, jdata ):
-        if trigger_kodi and ws_conn:
-            lw.log( ['sending Kodi ' + jdata] )
-            ws.send( jdata )
 
 
     def _set_datetime( self, str_time ):
@@ -286,6 +295,7 @@ def RunInWebsockets():
     try:
         if ws.sock.connected:
             gs.SetSunRiseSunset()
+            gs.SendJson( type = 'update', data = 'AutoDim:' + str( config.Get( 'autodim' ) ) )
         while (not should_quit) and ws.sock.connected:
             gs.Run( ledcolor = led.Color( config.Get( 'kodi_connection' ) ) )
             lw.log( ['in websockets and waiting %s minutes before reading from sensor again' % str( config.Get( 'readingdelta' ) )] )

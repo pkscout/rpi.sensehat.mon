@@ -1,3 +1,6 @@
+v.1.1.0~beta12
+- autodim now sends screen status change notice to Kodi immediately
+
 v.1.1.0~beta11
 - moved autodim to separate thread
 - sensor checks and autodim checks now run on separate schedules
