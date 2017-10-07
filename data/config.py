@@ -16,7 +16,7 @@ defaults = { 'readingdelta': 10,
              'pressureregular': 3,
              'kodiuri': 'localhost',
              'kodiwsport': 9090,
-             'logbackups': 0,
+             'logbackups': 1,
              'debug': False,
              'testmode': False }
 

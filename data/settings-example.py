@@ -64,7 +64,7 @@ kodiuri = 'localhost'
 kodiwsport = 9090
 
 #number of sensor and script logs to keep (requires restart to take affect) 
-logbackups = 0
+logbackups = 1
 
 # for debugging you can get a more verbose log by setting this to True (requires restart to take affect)
 debug = False
