@@ -108,8 +108,6 @@ class Main:
         if pressure is not None:
             s_data.append( 'IndoorPressure:' + self._reading_to_str( pressure ) )
             s_data.append( 'PressureTrend:' + self._get_pressure_trend( pressure ) )
-#        s_data.append( 'AutoDim:' + str( self.AUTODIM ) )
-#        s_data.append( 'ScreenStatus:' + self.SCREENSTATE )
         d_str = ''
         for item in s_data:
             d_str = '%s;%s' % (d_str, item)
