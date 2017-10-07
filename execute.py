@@ -52,7 +52,7 @@ class Main:
 
     def AutoDim( self ):
         while True:
-            if self.AUTODIM:
+            if self.AUTODIM and ws_conn:
                 lw.log( ['checking autodim'] )
                 lightlevel = self.CAMERA.LightLevel()
                 lw.log( ['got back %s from camera' % str( lightlevel )] )
@@ -271,6 +271,8 @@ def RunInWebsockets():
 
     def on_close( ws ):
         lw.log( ['closing websocket connection to Kodi'] )
+        global ws_conn
+        ws_conn = False
 
     global should_quit
     global ws
@@ -293,7 +295,7 @@ def RunInWebsockets():
     try:
         if ws.sock.connected:
             gs.SetSunRiseSunset()
-            gs.SendJson( type = 'update', data = 'AutoDim:' + str( config.Get( 'autodim' ) ) )
+        gs.SendJson( type = 'update', data = 'AutoDim:' + str( config.Get( 'autodim' ) ) )
         while (not should_quit) and ws.sock.connected:
             gs.Run( ledcolor = led.Color( config.Get( 'kodi_connection' ) ) )
             lw.log( ['in websockets and waiting %s minutes before reading from sensor again' % str( config.Get( 'readingdelta' ) )] )
@@ -326,7 +328,7 @@ if ( __name__ == "__main__" ):
                     if ws_conn or not firstrun:
                         break
                     else:
-                        lw.log( ['waiting 10 seconds then trying again'] )
+                        lw.log( ['no connection to Kodi, waiting 10 seconds then trying again'] )
                         time.sleep( 10 )
             if not should_quit:
                 ws_conn = False
