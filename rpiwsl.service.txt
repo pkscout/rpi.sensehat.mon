@@ -1,0 +1,11 @@
+[Unit]
+Description = Start/Stop/Restart RPI Weatherstation Lite
+After = graphical.target
+
+[Service]
+Type = simple
+ExecStart = /usr/bin/python /home/pi/rpi.weatherstation.lite/execute.py
+ExecStop = kill -s 2 $MAINPID
+
+[Install]
+WantedBy = multi-user.target

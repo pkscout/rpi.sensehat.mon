@@ -31,7 +31,7 @@ Then reboot.
 
 
 INSTALLATION:
-It is recommended you install this in /home/pi.  The Kodi companion addon assumes this is where the script is by default, so if you install it somewhere else, you'll need to point Kodi to the correct location.
+It is recommended you install this in /home/pi.  The service file you'll install later assumes this, so if you install it somewhere else, you'll need to edit rpiwsl.service.
 
 
 CONFIGURATION:
@@ -46,10 +46,6 @@ To run from the terminal (for testing): python /home/pi/rpi.sensehat.mon/execute
 To exit: CNTL-C
 
 Running from the terminal is useful during initial testing.  Once you know it's working the way you want, you should set it to autostart.  To do that:
-From a terminal window:
-nano /home/pi/.config/lxsession/LXDE-pi/autostart
+INSTRUCTIONS FOR SYSTEMCLTL SETUP
 
-and add:
-@python /home/pi/rpi.weatherstation.lite/execute.py &
-
-Save and exit.  From now on the python script will start after the Raspian desktop loads.  You can change settings by editing the settings.py file any time you'd like.  The script will reload the settings automatically.  No need to stop/start the script (unless otherwise noted in the settings file).
+You can change settings by editing the settings.py file any time you'd like.  The script will reload the settings automatically.  No need to stop/start the script (unless otherwise noted in the settings file).
