@@ -18,13 +18,8 @@ else:
     import simplejson as _json
 
 p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
-debug = config.Get( 'debug' )
 lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ),
-             numbackups = config.Get( 'logbackups' ), logdebug = str( debug ) )
-sensordata = Logger( logname = 'sensordata', logdebug = str( debug ),
-                     logconfig = 'timed', numbackups = config.Get( 'logbackups' ),
-                     format = '%(asctime)-15s %(message)s',
-                     logfile = os.path.join( p_folderpath, 'data', 'sensordata.log' ) )
+             numbackups = config.Get( 'logbackups' ), logdebug = str( config.Get( 'debug' ) ) )
 
 try:
     import websocket
@@ -112,8 +107,6 @@ class Main:
         for item in s_data:
             d_str = '%s;%s' % (d_str, item)
         d_str = d_str[1:]
-        sensordata.log( [d_str] )
-        lw.log( ['wrote sensor data to sensorlog'] )
         led.Sweep( start = 1, color = ledcolor, vertical = True )
         self.SendJson( type = 'update', data = d_str )
 
