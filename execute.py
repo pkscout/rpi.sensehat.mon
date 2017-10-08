@@ -107,8 +107,10 @@ class Main:
         for item in s_data:
             d_str = '%s;%s' % (d_str, item)
         d_str = d_str[1:]
-        led.Sweep( start = 1, color = ledcolor, vertical = True )
-        self.SendJson( type = 'update', data = d_str )
+        lw.log( ['sensor data: ' + d_str] )
+        if d_str:
+            led.Sweep( start = 1, color = ledcolor, vertical = True )
+            self.SendJson( type = 'update', data = d_str )
 
 
 
