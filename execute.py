@@ -89,7 +89,7 @@ class Main:
             time.sleep( config.Get( 'autodimdelta' ) * 60 )
 
 
-    def Run( self, ledcolor=(255, 255, 255) ):
+    def GetSensorData( self, ledcolor=(255, 255, 255) ):
         config.Reload()
         led.PixelOn( 0, 0, ledcolor )
         temperature = self.SENSOR.Temperature()
@@ -290,7 +290,7 @@ def RunInWebsockets():
             gs.SetSunRiseSunset()
         gs.SendJson( type = 'update', data = 'AutoDim:' + str( config.Get( 'autodim' ) ) )
         while (not should_quit) and ws.sock.connected:
-            gs.Run( ledcolor = led.Color( config.Get( 'kodi_connection' ) ) )
+            gs.GetSensorData( ledcolor = led.Color( config.Get( 'kodi_connection' ) ) )
             lw.log( ['in websockets and waiting %s minutes before reading from sensor again' % str( config.Get( 'readingdelta' ) )] )
             time.sleep( config.Get( 'readingdelta' ) * 60 )
     except KeyboardInterrupt:
@@ -325,7 +325,7 @@ if ( __name__ == "__main__" ):
                         time.sleep( 10 )
             if not should_quit:
                 ws_conn = False
-                gs.Run( ledcolor = led.Color( config.Get( 'no_kodi_connection' ) ) )
+                gs.GetSensorData( ledcolor = led.Color( config.Get( 'no_kodi_connection' ) ) )
                 lw.log( ['waiting %s minutes before reading from sensor again' % str( config.Get( 'readingdelta' ) )] )
                 firstrun = False
                 time.sleep( config.Get( 'readingdelta' ) * 60 )
