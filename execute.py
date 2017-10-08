@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.1.1.0~beta11
+# *  v.1.1.0~beta13
 # *  original RPi Weatherstation Lite code by pkscout
 
 import data.config as config
@@ -42,7 +42,8 @@ class Main:
         self.SUNRISE = ''
         self.SUNSET = ''
         self.DARKRUN = False
-        self.LIGHTRUN = False
+        self.BRIGHTRUN = False
+        self.DIMRUN = False
 
 
     def AutoDim( self ):
@@ -53,22 +54,33 @@ class Main:
                 lw.log( ['got back %s from camera' % str( lightlevel )] )
                 css = self.SCREENSTATE
                 do_dark = False
-                do_light = False
+                do_bright = False
+                do_dim = False
                 if lightlevel:
                     if lightlevel <= config.Get( 'dark' ):
                         do_dark = True
-                    if lightlevel >= config.Get( 'light' ):
-                        do_light = True
+                    elif lightlevel <= config.Get( 'bright' ):
+                        do_dim = True
+                    else:
+                        do_bright = True     
                 if do_dark and not self.DARKRUN:
                     lw.log( ['dark trigger activated with ' + config.Get( 'specialtriggers' ).get( 'dark' )] )
                     self.HandleAction( config.Get( 'specialtriggers' ).get( 'dark' ) )
                     self.DARKRUN = True
-                    self.LIGHTRUN = False
-                elif do_light and not self.LIGHTRUN:
-                    lw.log( ['light trigger activated with ' + config.Get( 'specialtriggers' ).get( 'light' )] )
-                    self.HandleAction( config.Get( 'specialtriggers' ).get( 'light' ) )
+                    self.BRIGHTRUN = False
+                    self.DIMRUN = False
+                elif do_bright and not self.BRIGHTRUN:
+                    lw.log( ['bright trigger activated with ' + config.Get( 'specialtriggers' ).get( 'bright' )] )
+                    self.HandleAction( config.Get( 'specialtriggers' ).get( 'bright' ) )
                     self.DARKRUN = False
-                    self.LIGHTRUN = True
+                    self.BRIGHTRUN = True
+                    self.DIMRUN = False
+                elif do_dim and not self.DIMRUN:
+                    lw.log( ['dim trigger activated with ' + config.Get( 'specialtriggers' ).get( 'dim' )] )
+                    self.HandleAction( config.Get( 'specialtriggers' ).get( 'dim' ) )
+                    self.DARKRUN = False
+                    self.BRIGHTRUN = False
+                    self.DIMRUN = True
                 else:
                     triggers = config.Get( 'timedtriggers' )
                     triggers.append( [config.Get( 'fetchsuntime' ), 'GetSunriseSunset'] )
@@ -128,7 +140,7 @@ class Main:
         elif action == 'autodimoff':
             self.AUTODIM = False
             lw.log( ['turned autodim off'] )
-        elif action.startswith( 'screenon' ) and self.SCREENSTATE == 'Off':
+        elif action.startswith( 'screenon' ):
             sb = action.split( ':' )
             try:
                 brightness = sb[1]
@@ -137,11 +149,19 @@ class Main:
             self.SCREEN.SetBrightness( brightness = brightness )
             self.SCREENSTATE = 'On'
             lw.log( ['turned screen on to brightness of ' + str( brightness )] )
+            if self.DIMRUN and self.BRIGHTRUN:
+                self.DARKRUN = False
+                self.DIMRUN = False
+                self.BRIGHTRUN = False
         elif action == 'screenoff' and self.SCREENSTATE == 'On':
             self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
             self.SCREEN.SetBrightness( brightness = 11 )
             self.SCREENSTATE = 'Off'
             lw.log( ['turned screen off and saved brightness as ' + str( self.STOREDBRIGHTNESS )] )
+            if not self.DARKRUN:
+                self.DARKRUN = True
+                self.DIMRUN = True
+                self.BRIGHTRUN = True
         elif action.startswith( 'brightness:' ):
             try:
                 level = int( action.split(':')[1] )

@@ -1,3 +1,8 @@
+v.1.1.0~beta13
+- autodim includes three levels: dark, dim, bright
+- timed triggered or manual display off cannot be overriden by light levels
+  must turn back on manually or with another timed trigger
+
 v.1.1.0~beta12
 - autodim now sends screen status change notice to Kodi immediately
 - autodim only runs if Kodi is running

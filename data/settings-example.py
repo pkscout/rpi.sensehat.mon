@@ -26,18 +26,21 @@ autodimdelta = 0.5
 # anything less than or equal to dark will be considered dark
 # anything greater than or equal to light will be considered light
 dark = 10
-light = 50
+light = 80
 
 # time (24 hour format) the updated sunrise and sunset should be fetched
 fetchsuntime = '3:00'
 
 # special triggers for autodim
 specialtriggers = { 'dark': 'ScreenOff',
-                    'light': 'ScreenOn' }
+                    'dim': 'ScreenOn:100',
+                    'bright': 'ScreenOn:200' }
 
 # timed triggers are a list of lists in the form of time, action, day type
 # time is 24 hour and can also take Sunrise and Sunset as a value
 # day type is optional and can be Weekdays or Weekend
+# WARNING: light levels cannot override timed triggers that turn the display off
+# by default there are NO timed triggers, these are examples so you can see the format
 timedtriggers = [
                   ['Sunrise', 'ScreenOn'],
                   ['8:00', 'Brightness:200'],
