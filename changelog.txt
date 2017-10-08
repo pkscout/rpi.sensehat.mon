@@ -2,6 +2,7 @@ v.1.1.0~beta12
 - autodim now sends screen status change notice to Kodi immediately
 - autodim only runs if Kodi is running
 - removed separate log for sensor data
+- functioning systemd service file included
 
 v.1.1.0~beta11
 - moved autodim to separate thread
