@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.1.1.0~beta13
+# *  v.2.0.0~beta14
 # *  original RPi Weatherstation Lite code by pkscout
 
 import data.config as config
@@ -81,9 +81,11 @@ class Main:
                     self.DARKRUN = False
                     self.BRIGHTRUN = False
                     self.DIMRUN = True
+                if self._is_time( config.Get( 'fetchsuntime' ) ):
+                    lw.log( ['getting updated sunrise and sunset times'] )
+                    self.HandleAction( 'GetSunriseSunset' )
                 else:
                     triggers = config.Get( 'timedtriggers' )
-                    triggers.append( [config.Get( 'fetchsuntime' ), 'GetSunriseSunset'] )
                     for onetrigger in triggers:
                         if onetrigger[0].lower() == 'sunrise':
                             onetrigger[0] = self.SUNRISE
