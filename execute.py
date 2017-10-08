@@ -182,6 +182,9 @@ class Main:
 
     def SendJson( self, type, data ):
         jdata = None
+        global got_response
+        got_response = False
+        ac = 1
         if type.lower() == 'update':
             jsondict = { 'id':'1', 'jsonrpc':'2.0', 'method':'Addons.ExecuteAddon',
                          'params':{'addonid':'script.weatherstation.lite','params':{'action':'updatekodi',
@@ -192,8 +195,13 @@ class Main:
             kodiquery = _json.dumps( jsondict )
         if trigger_kodi and ws_conn and jsondict:
             jdata = _json.dumps( jsondict )
-            lw.log( ['sending Kodi ' + jdata] )
-            ws.send( jdata )
+            while not got_response:
+                lw.log( ['sending Kodi ' + jdata] )
+                ws.send( jdata )
+                ac = ac + 1
+                time.sleep( 5 )
+                if ac > 5:
+                    break
 
 
     def SetSunRiseSunset( self, jsonresult = {} ):
@@ -269,8 +277,11 @@ class Main:
 
 def RunInWebsockets():
     def on_message( ws, message ):
+        global got_response
         lw.log( ['got back %s from Kodi' % message] )
         jm = _json.loads( message )
+        if jm.get( 'id' ) == '1':
+            got_response = True
         if jm.get( 'method' ) == 'System.OnQuit':
             ws.close()
         elif jm.get( 'method' ) == 'Other.RPIWSL_VariablePass':
@@ -278,6 +289,7 @@ def RunInWebsockets():
             if action:
                 gs.HandleAction( action )
         elif jm.get( 'id' ) == '2':
+            got_response = True
             gs.SetSunRiseSunset( jsonresult = jm.get( 'result' ) )
                 
     def on_error( ws, error ):
@@ -327,6 +339,8 @@ if ( __name__ == "__main__" ):
     lw.log( ['script started', 'debugging set to ' + str( config.Get( 'debug') ) ], 'info' )
     global should_quit
     global ws_conn
+    global got_response
+    got_response = False
     should_quit = False
     ws_conn = False
     firstrun = True
