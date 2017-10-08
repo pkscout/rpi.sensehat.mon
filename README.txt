@@ -15,8 +15,8 @@ PREREQUISITES:
 
 3. For rpi.weatherstation.lite to function properly, there are some modules you need to install:
 From a terminal window:
-pip install websocket-client		(to communicate with Kodi)
-pip install rpi-backlight			(to control the RPi Touchscreen)
+sudo pip install websocket-client		(to communicate with Kodi)
+sudo pip install rpi-backlight			(to control the RPi Touchscreen)
 
 4. If you have the RPi camera, it can be used to detect light levels.  The Camera must be plugged in and turned on in raspi-config.
 
