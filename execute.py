@@ -103,6 +103,10 @@ class Main:
             time.sleep( config.Get( 'autodimdelta' ) * 60 )
 
 
+    def GetScreenState( self ):
+        return self.SCREENSTATE
+
+
     def GetSensorData( self, ledcolor=(255, 255, 255) ):
         config.Reload()
         led.PixelOn( 0, 0, ledcolor )
@@ -321,18 +325,16 @@ def RunInWebsockets():
     except AttributeError:
         ws_conn = False
     lw.log( ['websocket status: ' + str( ws_conn )] )
+    if ws_conn:
+        gs.SetSunRiseSunset()
+        gs.SendJson( type = 'update', data = 'AutoDim:%s;ScreenStatus:%s' % (str( config.Get( 'autodim' ) ), gs.GetScreenState()) )
     try:
-        if ws.sock.connected:
-            gs.SetSunRiseSunset()
-        gs.SendJson( type = 'update', data = 'AutoDim:' + str( config.Get( 'autodim' ) ) )
-        while (not should_quit) and ws.sock.connected:
+        while (not should_quit) and ws_conn:
             gs.GetSensorData( ledcolor = led.Color( config.Get( 'kodi_connection' ) ) )
             lw.log( ['in websockets and waiting %s minutes before reading from sensor again' % str( config.Get( 'readingdelta' ) )] )
             time.sleep( config.Get( 'readingdelta' ) * 60 )
     except KeyboardInterrupt:
         should_quit = True
-    except AttributeError:
-        pass
 
 
 if ( __name__ == "__main__" ):
