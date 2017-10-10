@@ -108,7 +108,7 @@ class SenseHatLED:
             self.SENSE.set_pixel( x, y, color )
         
         
-    def Sweep( self, vertical=False, anchor=0, start=0, stop=7, color=(255, 255, 255), pause=0.2 ):
+    def Sweep( self, vertical=False, anchor=0, start=0, stop=7, color=(255, 255, 255), pause=0.1 ):
         if start < 0:
             start = 0
         if stop > 7:
