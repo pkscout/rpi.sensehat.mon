@@ -109,7 +109,7 @@ class Main:
 
     def GetSensorData( self, ledcolor=(255, 255, 255) ):
         config.Reload()
-        temperature = self.SENSOR.Temperature()
+        temperature = self.SENSOR.Temperature( adjust = True )
         humidity = self.SENSOR.Humidity()
         pressure = self.SENSOR.Pressure()
         s_data = []

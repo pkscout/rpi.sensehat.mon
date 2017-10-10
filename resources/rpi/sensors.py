@@ -4,7 +4,7 @@
 # *  original RPi Sensor classes by pkscout
 
 try:
-    import random, time
+    import random, subprocess, time
     from sense_hat import SenseHat
 except ImportError:
     pass
@@ -31,12 +31,17 @@ class SenseHatSensors:
         return None
 
         
-    def Temperature( self ):
+    def Temperature( self, adjust=False ):
         if self.SENSE:
             for i in range( 0, 5 ):
                 reading = self.SENSE.get_temperature()
                 if reading:
-                    return reading
+                    if adjust:
+                        cpu_raw = subprocess.check_output("vcgencmd measure_temp", shell=True)
+                        cpu_temp = float( cpu_raw.split( "=" )[1].split( "'" )[0] )
+                        return int( round( reading - ((cpu_temp - reading)/8.199), 0 ) )
+                    else:
+                        return reading
         elif self.TESTMODE:        
             return random.randint( 21, 28 )
         return None

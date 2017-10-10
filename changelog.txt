@@ -2,6 +2,8 @@ v.2.0.0~beta14
 - fix for getting sunrise/sunset running multiple times in a row
 - added logic to resend JSON call if no response is received from a Kodi
 - send screen status at websocket connection (so a Kodi restart restores state)
+- fixes for LED control
+- re-enabled some basic temperature adjustment
 
 v.2.0.0~beta13
 - autodim includes three levels: dark, dim, bright
