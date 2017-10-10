@@ -53,6 +53,14 @@ timedtriggers = [
 weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 weekend  = ['Saturday', 'Sunday']
 
+# disable if the SenseHAT is far enough away from the RPi processor to read temp properly
+adjust_temp = True
+
+# the factor used to change the temperature
+# for an RPi mounted as outlined in the wiki, use the factor below
+# 5.466 is the standard if the SenseHat is in a regular case with the RPi
+factor = 8.199
+
 # amount of time in minutes to look back at pressure history to determine pressure trend
 pressuredelta = 180
 

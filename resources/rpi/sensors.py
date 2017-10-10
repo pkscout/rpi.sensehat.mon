@@ -31,7 +31,7 @@ class SenseHatSensors:
         return None
 
         
-    def Temperature( self, adjust=False ):
+    def Temperature( self, adjust=False, factor=5.466 ):
         if self.SENSE:
             for i in range( 0, 5 ):
                 reading = self.SENSE.get_temperature()
