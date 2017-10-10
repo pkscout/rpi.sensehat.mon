@@ -126,8 +126,8 @@ class Main:
         d_str = d_str[1:]
         lw.log( ['sensor data: ' + d_str] )
         if d_str:
-            led.Sweep( anchor = 6, stop = 7, color = ledcolor )
-            led.PixelOn( 0, 6, ledcolor )
+            led.Sweep( anchor = 7, start = 1, color = ledcolor )
+            led.PixelOn( 1, 7, ledcolor )
             self.SendJson( type = 'update', data = d_str )
 
 
@@ -326,7 +326,7 @@ def RunInWebsockets():
         ws_conn = False
     lw.log( ['websocket status: ' + str( ws_conn )] )
     if ws_conn:
-        led.PixelOn( 0, 6, led.Color( config.Get( 'kodi_connection' ) ) )
+        led.PixelOn( 1, 7, led.Color( config.Get( 'kodi_connection' ) ) )
         gs.SetSunRiseSunset()
         gs.SendJson( type = 'update', data = 'AutoDim:%s;ScreenStatus:%s' % (str( config.Get( 'autodim' ) ), gs.GetScreenState()) )
     try:
@@ -348,8 +348,8 @@ if ( __name__ == "__main__" ):
     ws_conn = False
     firstrun = True
     led = SenseHatLED()
-    led.PixelOn( 7, 7, led.Color( config.Get( 'script_running' ) ) )
-    led.PixelOn( 0, 6, led.Color( config.Get( 'no_kodi_connection' ) ) )
+    led.PixelOn( 0, 7, led.Color( config.Get( 'script_running' ) ) )
+    led.PixelOn( 1, 7, led.Color( config.Get( 'no_kodi_connection' ) ) )
     gs = Main()
     adt = Thread( target = gs.AutoDim )
     adt.setDaemon( True )
