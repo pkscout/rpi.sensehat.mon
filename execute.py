@@ -210,6 +210,11 @@ class Main:
                     break
 
 
+    def SetBrightnessBar( self ):
+        led.SetBar( level = self.SCREEN.GetBrightness(), anchor = 6, min = 25, max = 225,
+                    color = led.Color( config.Get( 'brightness_bar' ) ) )
+
+
     def SetSunRiseSunset( self, jsonresult = {} ):
         if jsonresult:
             self.SUNRISE = self._convert_to_24_hour( jsonresult.get( 'Window(Weather).Property(Today.Sunrise)' ) )
