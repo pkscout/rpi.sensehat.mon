@@ -39,7 +39,7 @@ class SenseHatSensors:
                     if adjust:
                         cpu_raw = subprocess.check_output("vcgencmd measure_temp", shell=True)
                         cpu_temp = float( cpu_raw.split( "=" )[1].split( "'" )[0] )
-                        return int( round( reading - ((cpu_temp - reading)/8.199), 0 ) )
+                        return int( round( reading - ((cpu_temp - reading)/factor), 0 ) )
                     else:
                         return reading
         elif self.TESTMODE:        
@@ -112,7 +112,23 @@ class SenseHatLED:
         if self.SENSE:
             self.SENSE.set_pixel( x, y, color )
         
-        
+
+    def SetBar( self, level, vertical=False, anchor=0, min=0, max=255, color=(255, 255, 255) ):
+        step = (max - min)/8
+        height = int( (level - min)/step )
+        for loc in range( 0, 7 ):
+            if vertical:
+                x = anchor
+                y = loc
+            else:
+                x = loc
+                y = anchor
+            if loc < height:
+                self.PixelOn( x, y, color )
+            else:
+                self.PixelOff( x, y )
+
+
     def Sweep( self, vertical=False, anchor=0, start=0, stop=7, color=(255, 255, 255), pause=0.1 ):
         if start < 0:
             start = 0

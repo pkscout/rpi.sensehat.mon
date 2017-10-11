@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.2.0.0~beta14
+# *  v.2.0.0~beta15
 # *  original RPi Weatherstation Lite code by pkscout
 
 import data.config as config
@@ -44,6 +44,7 @@ class Main:
         self.DARKRUN = False
         self.BRIGHTRUN = False
         self.DIMRUN = False
+        self.SetBrightnessBar()
 
 
     def AutoDim( self ):
@@ -182,6 +183,7 @@ class Main:
                     lw.log( ['screen is off, so set stored brightness to ' + str( level )] )
         elif action == 'getsunrisesunset':
             self.SetSunRiseSunset()
+        self.SetBrightnessBar()
 
 
     def SendJson( self, type, data ):
