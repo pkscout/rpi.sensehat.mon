@@ -34,7 +34,7 @@ class SenseHatSensors:
     def Temperature( self, adjust=False, factor=5.466 ):
         if self.SENSE:
             for i in range( 0, 5 ):
-                reading = self.SENSE.get_temperature()
+                reading = self.SENSE.get_temperature_from_pressure()
                 if reading:
                     if adjust:
                         cpu_raw = subprocess.check_output("vcgencmd measure_temp", shell=True)
