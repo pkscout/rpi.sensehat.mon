@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.2.0.0~beta15
+# *  v.2.0.0~beta16
 # *  original RPi Weatherstation Lite code by pkscout
 
 import data.config as config
@@ -9,7 +9,7 @@ from datetime import datetime
 from threading import Thread
 from collections import deque
 from resources.common.xlogger import Logger
-from resources.rpi.sensors import SenseHatSensors, SenseHatLED
+from resources.rpi.sensors import SenseHatSensors, BME280Sensors, SenseHatLED
 from resources.rpi.screens import RPiTouchscreen
 from resources.rpi.cameras import RPiCamera
 if sys.version_info >= (2, 7):
@@ -32,7 +32,12 @@ except ImportError:
 
 class Main:
     def __init__( self ):
-        self.SENSOR = SenseHatSensors( testmode = config.Get( 'testmode' ) )
+        if config.Get( 'which_sensor' ).lower() == 'sensehat':
+            self.SENSOR = SenseHatSensors( adjust = config.Get( 'sensehat_adjust' ), factor = config.Get( 'sensehat_factor' ),
+                                           testmode = config.Get( 'testmode' ) )
+        else:
+            self.SENSOR = BME280Sensors( port = config.Get( 'bme280_port' ), address = config.Get( 'bme280_address' ),
+                                         sampling = config.Get( 'bme280_sampling' ), testmode = config.Get( 'testmode' ) )            
         self.SCREEN = RPiTouchscreen( testmode = config.Get( 'testmode' ) )
         self.CAMERA = RPiCamera( testmode = config.Get( 'testmode' ) )
         self.AUTODIM = config.Get( 'autodim' )
@@ -110,7 +115,7 @@ class Main:
 
     def GetSensorData( self, ledcolor=(255, 255, 255) ):
         config.Reload()
-        temperature = self.SENSOR.Temperature( adjust = config.Get( 'adjust_temp' ), factor = config.Get( 'factor' ) )
+        temperature = self.SENSOR.Temperature()
         humidity = self.SENSOR.Humidity()
         pressure = self.SENSOR.Pressure()
         s_data = []

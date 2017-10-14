@@ -1,11 +1,11 @@
 rpi.weatherstation.lite
 ================
-This python script is designed to run as a service on a Raspberry Pi that has a SenseHAT installed.  It is designed to run in conjunction with Kodi running a modified version of the Estuary skin with a companion addon called script.weatherstation.lite.  Together they provide a clock/weather station system based on the Raspberry Pi platform.  Information about the complete setup will be available later on the wiki for this repo.
+This python script is designed to run as a service on a Raspberry Pi that has a SenseHAT or BME280 sensor installed.  It is designed to run in conjunction with Kodi running a modified version of the Estuary skin with a companion addon called script.weatherstation.lite.  Together they provide a clock/weather station system based on the Raspberry Pi platform.  Information about the complete setup will be available later on the wiki for this repo.
 
 This script provides a few functions:
-1. read the temperature, humidity, and pressure from the SenseHat and write it to a file
+1. read the temperature, humidity, and pressure from the SenseHat or BME280 and pass them to Kodi
 2. Handle messages sent from Kodi for screen control (brightness and auto dim status)
-3. Set the brightness, and screen on/off based on triggers (dark, light) or times (including sunrise, sunset)
+3. Set the brightness, and screen on/off based on triggers (dark, dim, bright) or times (including sunrise, sunset)
 
 
 PREREQUISITES:
@@ -17,6 +17,7 @@ PREREQUISITES:
 From a terminal window:
 sudo pip install websocket-client		(to communicate with Kodi)
 sudo pip install rpi-backlight			(to control the RPi Touchscreen)
+sudo pip install bme280                 (only needed if you're using the BME280 sensor)
 
 4. If you have the RPi camera, it can be used to detect light levels.  The Camera must be plugged in and turned on in raspi-config.
 
@@ -46,6 +47,6 @@ To run from the terminal (for testing): python /home/pi/rpi.sensehat.mon/execute
 To exit: CNTL-C
 
 Running from the terminal is useful during initial testing.  Once you know it's working the way you want, you should set it to autostart.  To do that:
-INSTRUCTIONS FOR SYSTEMCLTL SETUP
+INSTRUCTIONS FOR SYSTEMCLTL SETUP TO BE ADDED
 
 You can change settings by editing the settings.py file any time you'd like.  The script will reload the settings automatically.  No need to stop/start the script (unless otherwise noted in the settings file).

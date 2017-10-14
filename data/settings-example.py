@@ -16,8 +16,7 @@ autodim = True
 # amount of time (in minutes) between auto dim checks
 autodimdelta = 0.5
 
-# for autodim there are specific actions you can assign:
-# GetSunriseSunset, ScreenOn, ScreenOff, Brightness:xxx
+# for autodim there are specific actions you can assign: ScreenOn, ScreenOff, Brightness:xxx
 # for Brightness (and optionally for ScreenOn) :xxx is a number indicating the brightness to set
 # if you use the dark or light triggers, they will run once and then not run again until
 # the opposite trigger has happened (i.e. dark runs then won't run again until light occurs)
@@ -53,13 +52,33 @@ timedtriggers = [
 weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 weekend  = ['Saturday', 'Sunday']
 
-# disable if the SenseHAT is far enough away from the RPi processor to read temp properly
-adjust_temp = True
+# choose which sensor you're using: BME280 or SenseHat (requires restart to take affect)
+which_sensor = 'BME280'
 
-# the factor used to change the temperature
+# set a sampling mode for the BME280 (requires restart to take affect)
+# Oversampling modes
+# oversampling.x1 = 1
+# oversampling.x2 = 2
+# oversampling.x4 = 3
+# oversampling.x8 = 4
+# oversampling.x16 = 5
+bme280_sampling = 4
+
+# the port of the BME280 (requires restart to take affect)
+bme280_port = 1
+
+# the address of the BME280 (requires restart to take affect)
+bme280_address = 0x76
+
+# disable if the SenseHAT is far enough away from the RPi processor to read temp properly
+# (requires restart to take affect)
+sensehat_adjust = True
+
+# the factor used to change the temperature read from the SenseHat
 # for an RPi mounted as outlined in the wiki, use the factor below
 # 5.466 is the standard if the SenseHat is in a regular case with the RPi
-factor = 8.199
+# (requires restart to take affect)
+sensehat_factor = 8.199
 
 # amount of time in minutes to look back at pressure history to determine pressure trend
 pressuredelta = 180
@@ -81,5 +100,5 @@ logbackups = 1
 debug = False
 
 # if you're testing on a non-RPi platform, setting to True will generate random data for
-# SenseHAT sensors and PiCamera light level (requires restart to take affect)
+# all sensors and PiCamera light level (requires restart to take affect)
 testmode = False
