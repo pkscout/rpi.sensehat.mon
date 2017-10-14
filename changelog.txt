@@ -1,5 +1,6 @@
 v~2.0.0~beta16
 - added support for BME280 sensor
+- SenseHat now returns lower of two temps from pressure and humidity sensors
 
 v.2.0.0~beta15
 - added brightness level indicator on LED
