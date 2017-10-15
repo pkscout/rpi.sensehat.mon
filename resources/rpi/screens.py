@@ -33,8 +33,10 @@ class RPiTouchscreen:
             return
         if brightness > max:
             brightness = max
+        elif brightness < 11:
+            # I have no idea why the fork the absolute minimum is 11, but it is
+            brightness = 11
         elif brightness < min:
-            # I have no idea why the fork the minimum is 11, but it is
             brightness = min
         if self.TOUCHSCREEN:
             rpi_backlight.set_brightness( brightness, smooth = smooth, duration = duration )
