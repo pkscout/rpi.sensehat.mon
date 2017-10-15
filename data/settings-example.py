@@ -52,6 +52,9 @@ timedtriggers = [
 weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 weekend  = ['Saturday', 'Sunday']
 
+# the port of the SMBus (requires restart to take affect)
+i2c_port = 1
+
 # choose which sensor you're using: BME280 or SenseHat (requires restart to take affect)
 which_sensor = 'BME280'
 
@@ -63,9 +66,6 @@ which_sensor = 'BME280'
 # oversampling.x8 = 4
 # oversampling.x16 = 5
 bme280_sampling = 4
-
-# the port of the BME280 (requires restart to take affect)
-bme280_port = 1
 
 # the address of the BME280 (requires restart to take affect)
 bme280_address = 0x76
