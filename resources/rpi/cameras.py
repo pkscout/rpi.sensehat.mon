@@ -16,18 +16,10 @@ except ImportError:
 
 
 class AmbientSensor:
-    def __init__ ( self, port=1, address=0x23, testmode=False ):
+    def __init__ ( self, port=1, address=0x23, cmd=0x20, testmode=False ):
         self.ADDRESS = address
+        self.CMD = cmd
         self.TESTMODE = testmode
-        self.POWER_DOWN = 0x00 # No active state
-        self.POWER_ON   = 0x01 # Power on
-        self.RESET      = 0x07 # Reset data register value
-        self.CONTINUOUS_LOW_RES_MODE = 0x13
-        self.CONTINUOUS_HIGH_RES_MODE_1 = 0x10
-        self.CONTINUOUS_HIGH_RES_MODE_2 = 0x11
-        self.ONE_TIME_HIGH_RES_MODE_1 = 0x20
-        self.ONE_TIME_HIGH_RES_MODE_2 = 0x21
-        self.ONE_TIME_LOW_RES_MODE = 0x23
         try:
             self.BUS = smbus2.SMBus( port )
         except (OSError, NameError) as error:
@@ -36,7 +28,7 @@ class AmbientSensor:
     
     def LightLevel( self ):
         if self.BUS:
-            data = bus.read_i2c_block_data( self.ADDRESS, self.ONE_TIME_HIGH_RES_MODE_1 )
+            data = self.BUS.read_i2c_block_data( self.ADDRESS, self.CMD, 2 )
             return self._converttonumber( data )
         elif self.TESTMODE:
             return random.randint( 0, 65000 )

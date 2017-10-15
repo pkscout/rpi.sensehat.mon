@@ -274,7 +274,7 @@ class Main:
             return RPiCamera( testmode = config.Get( 'testmode' ) )
         else:
             return AmbientSensor( port = config.Get( 'i2c_port' ), address = config.Get( 'ambient_address' ),
-                                  testmode = config.Get( 'testmode' ) )            
+                                  cmd = config.Get( 'ambient_cmd' ), testmode = config.Get( 'testmode' ) )            
 
     
     def _pick_screen( self ):

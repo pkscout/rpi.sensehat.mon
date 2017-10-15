@@ -85,8 +85,14 @@ sensehat_factor = 8.199
 # choose which 'camera' you are using to detect light levels: pi or ambient (requires restart to take effect)
 which_camera = 'ambient'
 
-#the i2c address of the ambient light sensor
+# the i2c address of the ambient light sensor
 ambient_address = 0x23
+
+# the command to send to the ambient sensor if needed. If not, use 0. (requires restart to take affect)
+# the BH1750 accepts the following commands to set the light sensor method:
+# CONTINUOUS_LOW_RES_MODE = 0x13, CONTINUOUS_HIGH_RES_MODE_1 = 0x10, CONTINUOUS_HIGH_RES_MODE_2 = 0x11
+# ONE_TIME_HIGH_RES_MODE_1 = 0x20, ONE_TIME_HIGH_RES_MODE_2 = 0x21, ONE_TIME_LOW_RES_MODE = 0x23
+ambient_cmd = 0x20
 
 # amount of time in minutes to look back at pressure history to determine pressure trend
 pressuredelta = 180
