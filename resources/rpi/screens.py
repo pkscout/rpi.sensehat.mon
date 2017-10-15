@@ -53,7 +53,7 @@ class RPiTouchscreen:
         if direction == 'down':
             step = -1 * step
         new_brightness = self.CURRENTBRIGHTNESS + step
-        self.SetBrightness( new_brightness, max = max, min = min )
+        self.SetBrightness( new_brightness, max = max, min = min, duration = duration )
 
 
     def GetBrightness( self ):
