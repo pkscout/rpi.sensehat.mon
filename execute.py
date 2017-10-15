@@ -119,22 +119,18 @@ class Main:
         humidity = self.SENSOR.Humidity()
         pressure = self.SENSOR.Pressure()
         s_data = []
-        if temperature is not None:
-            s_data.append( 'IndoorTemp:' + self._reading_to_str( temperature ) )
-        if humidity is not None:
-            s_data.append( 'IndoorHumidity:' + self._reading_to_str( humidity ) )
-        if pressure is not None:
-            s_data.append( 'IndoorPressure:' + self._reading_to_str( pressure ) )
-            s_data.append( 'PressureTrend:' + self._get_pressure_trend( pressure ) )
+        s_data.append( 'IndoorTemp:' + self._reading_to_str( temperature ) )
+        s_data.append( 'IndoorHumidity:' + self._reading_to_str( humidity ) )
+        s_data.append( 'IndoorPressure:' + self._reading_to_str( pressure ) )
+        s_data.append( 'PressureTrend:' + self._get_pressure_trend( pressure ) )
         d_str = ''
         for item in s_data:
             d_str = '%s;%s' % (d_str, item)
         d_str = d_str[1:]
         lw.log( ['sensor data: ' + d_str] )
-        if d_str:
-            led.Sweep( anchor = 7, start = 1, color = ledcolor )
-            led.PixelOn( 1, 7, ledcolor )
-            self.SendJson( type = 'update', data = d_str )
+        led.Sweep( anchor = 7, start = 1, color = ledcolor )
+        led.PixelOn( 1, 7, ledcolor )
+        self.SendJson( type = 'update', data = d_str )
 
 
 
@@ -244,6 +240,8 @@ class Main:
 
 
     def _get_pressure_trend( self, current_pressure ):
+        if current_pressure is None:
+            return 'steady'
         self.PRESSUREHISTORY.append( current_pressure )
         if len( self.PRESSUREHISTORY ) > config.Get( 'pressuredelta' ) / config.Get( 'readingdelta' ):
             self.PRESSUREHISTORY.popleft()
@@ -277,6 +275,8 @@ class Main:
 
 
     def _reading_to_str( self, reading ):
+        if reading is None:
+            return str( reading )
         return str( int( round( reading ) ) )
 
 
@@ -384,6 +384,7 @@ if ( __name__ == "__main__" ):
                 time.sleep( config.Get( 'readingdelta' ) * 60 )
     except KeyboardInterrupt:
         pass
+    gs.SendJson( type = 'update', data = 'IndoorTemp:None;IndoorHumidity:None;IndoorPressure:None;PressureTrend:None' )
     led.ClearPanel()
     lw.log( ['script finished'], 'info' )
 
