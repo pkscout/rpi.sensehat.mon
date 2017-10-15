@@ -24,8 +24,10 @@ autodimdelta = 0.5
 # light level thesholds for dark and light
 # anything less than or equal to dark will be considered dark
 # anything greater than or equal to light will be considered light
-dark = 10
-light = 80
+# for ambient light sensor target values are dark: 50, bright: 700
+# for pi camera target values are dark: 10, bright: 80
+dark = 50
+bright = 700
 
 # time (24 hour format) the updated sunrise and sunset should be fetched
 fetchsuntime = '3:00'
@@ -67,7 +69,7 @@ which_sensor = 'BME280'
 # oversampling.x16 = 5
 bme280_sampling = 4
 
-# the address of the BME280 (requires restart to take affect)
+# the i2c address of the BME280 (requires restart to take affect)
 bme280_address = 0x76
 
 # disable if the SenseHAT is far enough away from the RPi processor to read temp properly
@@ -79,6 +81,12 @@ sensehat_adjust = True
 # 5.466 is the standard if the SenseHat is in a regular case with the RPi
 # (requires restart to take affect)
 sensehat_factor = 8.199
+
+# choose which 'camera' you are using to detect light levels: pi or ambient (requires restart to take effect)
+which_camera = 'ambient'
+
+#the i2c address of the ambient light sensor
+ambient_address = 0x23
 
 # amount of time in minutes to look back at pressure history to determine pressure trend
 pressuredelta = 180

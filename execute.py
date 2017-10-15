@@ -9,9 +9,9 @@ from datetime import datetime
 from threading import Thread
 from collections import deque
 from resources.common.xlogger import Logger
-from resources.rpi.sensors import SenseHatSensors, BME280Sensors, SenseHatLED
-from resources.rpi.screens import RPiTouchscreen
-from resources.rpi.cameras import RPiCamera
+from resources.rpi.sensors import BME280Sensors, SenseHatSensors
+from resources.rpi.screens import RPiTouchscreen, SenseHatLED
+from resources.rpi.cameras import AmbientSensor, RPiCamera
 if sys.version_info >= (2, 7):
     import json as _json
 else:
@@ -32,14 +32,9 @@ except ImportError:
 
 class Main:
     def __init__( self ):
-        if config.Get( 'which_sensor' ).lower() == 'sensehat':
-            self.SENSOR = SenseHatSensors( adjust = config.Get( 'sensehat_adjust' ), factor = config.Get( 'sensehat_factor' ),
-                                           testmode = config.Get( 'testmode' ) )
-        else:
-            self.SENSOR = BME280Sensors( port = config.Get( 'bme280_port' ), address = config.Get( 'bme280_address' ),
-                                         sampling = config.Get( 'bme280_sampling' ), testmode = config.Get( 'testmode' ) )            
-        self.SCREEN = RPiTouchscreen( testmode = config.Get( 'testmode' ) )
-        self.CAMERA = RPiCamera( testmode = config.Get( 'testmode' ) )
+        self.SENSOR = self._pick_sensor()
+        self.CAMERA = self._pick_camera()
+        self.SCREEN = self._pick_screen()
         self.AUTODIM = config.Get( 'autodim' )
         self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
         self.SCREENSTATE = 'On'
@@ -272,6 +267,27 @@ class Main:
             return True
         else:
             return False
+
+
+    def _pick_camera( self ):
+        if config.Get( 'which_camera' ).lower() == 'pi':
+            return RPiCamera( testmode = config.Get( 'testmode' ) )
+        else:
+            return AmbientSensor( port = config.Get( 'i2c_port' ), address = config.Get( 'ambient_address' ),
+                                  testmode = config.Get( 'testmode' ) )            
+
+    
+    def _pick_screen( self ):
+        return RPiTouchscreen( testmode = config.Get( 'testmode' ) )
+    
+    
+    def _pick_sensor( self ):
+        if config.Get( 'which_sensor' ).lower() == 'sensehat':
+            return SenseHatSensors( adjust = config.Get( 'sensehat_adjust' ), factor = config.Get( 'sensehat_factor' ),
+                                           testmode = config.Get( 'testmode' ) )
+        else:
+            return BME280Sensors( port = config.Get( 'i2c_port' ), address = config.Get( 'bme280_address' ),
+                                         sampling = config.Get( 'bme280_sampling' ), testmode = config.Get( 'testmode' ) )            
 
 
     def _reading_to_str( self, reading ):
