@@ -30,16 +30,24 @@ defaults = { 'readingdelta': 10,
              'debug': False,
              'testmode': False }
 
+import sys
 try:
     import data.settings as overrides
     has_overrides = True
 except ImportError:
     has_overrides = False
+if sys.version_info < (3, 0):
+    _reload = reload
+elif sys.version_info >= (3, 4):
+    from importlib import reload as _reload
+else:
+    from imp import reload as _reload
+
 
 
 def Reload():
     if has_overrides:
-        reload( overrides )
+        _reload( overrides )
 
 
 def Get( name ):

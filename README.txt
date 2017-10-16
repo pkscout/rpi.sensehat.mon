@@ -11,13 +11,13 @@ This script provides a few functions:
 PREREQUISITES:
 1. Optimally you should be running Raspian Jessie or later, as it has all the SenseHAT and touchscreen modules and most of the python bindings already included.  If you're running something older, you'll have to run the script, see what imports don't work, and download python modules as needed.
 
-2. You need to use Python 2.7.x for this.  3.x will not work, as I know I'm using at least one 2.7.x function (to reload the settings) that isn't available any longer in Python 3.x.
+2. Python3 is recommended, although this works in Python2 as well.  If you use Python2, then in step 3 use pip instead of pip3.  You'll also need to edit the rpiwsl.service.txt to call python instead of python3 before you install it (see below for those install instructions).
 
 3. For rpi.weatherstation.lite to function properly, there are some modules you need to install:
 From a terminal window:
-sudo pip install websocket-client		(to communicate with Kodi)
-sudo pip install rpi-backlight			(to control the RPi Touchscreen)
-sudo pip install bme280                 (only needed if you're using the BME280 sensor)
+sudo pip3 install websocket-client		(to communicate with Kodi)
+sudo pip3 install rpi-backlight			(to control the RPi Touchscreen)
+sudo pip3 install bme280                (only needed if you're using the BME280 sensor)
 
 4. If you have the RPi camera, it can be used to detect light levels.  The Camera must be plugged in and turned on in raspi-config.
 

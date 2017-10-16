@@ -8,10 +8,13 @@ import calendar, os, sys, time
 from datetime import datetime
 from threading import Thread
 from collections import deque
-from resources.common.xlogger import Logger
 from resources.rpi.sensors import BME280Sensors, SenseHatSensors
 from resources.rpi.screens import RPiTouchscreen, SenseHatLED
 from resources.rpi.cameras import AmbientSensor, RPiCamera
+if sys.version_info < (3, 0):
+    from resources.common.xlogger import Logger
+else:
+    from resources.common.xlogger3 import Logger
 if sys.version_info >= (2, 7):
     import json as _json
 else:
@@ -99,7 +102,7 @@ class Main:
                         if self._is_time( onetrigger[0], checkdays = checkdays ):
                             lw.log( ['timed trigger %s activated with %s' % (onetrigger[0], onetrigger[1])] )
                             self.HandleAction( onetrigger[1] )
-                if css <> self.SCREENSTATE:
+                if css != self.SCREENSTATE:
                     self.SendJson( type = 'update', data = 'ScreenStatus:' + self.SCREENSTATE )
             time.sleep( config.Get( 'autodimdelta' ) * 60 )
 

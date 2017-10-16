@@ -6,7 +6,7 @@ After = multi-user.target
 Type = simple
 User = pi
 KillSignal = SIGINT
-ExecStart = /usr/bin/python /home/pi/rpi.weatherstation.lite/execute.py
+ExecStart = /usr/bin/python3 /home/pi/rpi.weatherstation.lite/execute.py
 
 [Install]
 WantedBy = multi-user.target

@@ -12,6 +12,7 @@ try:
     from sense_hat import SenseHat
 except ImportError:
     pass
+from six import string_types
 
 
 
@@ -97,7 +98,7 @@ class SenseHatLED:
 
 
     def Color( self, color ):
-        if isinstance( color, basestring ):
+        if isinstance( color, string_types ):
             return self.PALETTE[color.lower()]
         elif isinstance( color, tuple ):
             if len( color ) == 3:

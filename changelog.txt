@@ -1,3 +1,7 @@
+v~2.0.0~beta17
+- fixed settings reload to support Python 3.x
+- other changes to support Python 3.x
+
 v~2.0.0~beta16
 - added support for BME280 Temperature, Humidity, Pressure sensor
 - added support for i2c ambient light sensor 
