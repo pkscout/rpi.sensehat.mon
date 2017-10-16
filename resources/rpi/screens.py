@@ -27,7 +27,7 @@ class RPiTouchscreen:
             self.TOUCHSCREEN = False
             
     
-    def SetBrightness( self, brightness, max=255, min=11, smooth=True, duration=5.0 ):
+    def SetBrightness( self, brightness, max=255, min=11, smooth=True, duration=5 ):
         brightness = int( brightness )
         if brightness == self.CURRENTBRIGHTNESS:
             return
@@ -43,7 +43,7 @@ class RPiTouchscreen:
             self.CURRENTBRIGHTNESS = brightness
 
 
-    def AdjustBrightness( self, direction, step=25, smooth=True, duration=1.0 ):
+    def AdjustBrightness( self, direction, step=25, smooth=True, duration=1 ):
         max = int( 255 / step ) * step
         min = step
         if self.CURRENTBRIGHTNESS > max:
