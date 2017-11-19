@@ -15,7 +15,7 @@ except ImportError:
     
     
 class BME280Sensors:
-    def __init__( self, port=1, address=0x76, sampling=4, adjust=-1.5, testmode=False ):
+    def __init__( self, port=1, address=0x76, sampling=4, adjust=-1, testmode=False ):
         self.TESTMODE = testmode
         self.ADDRESS = address
         self.SAMPLING = sampling
