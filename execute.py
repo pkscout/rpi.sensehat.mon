@@ -292,10 +292,7 @@ class Main:
 
 
     def _reading_to_str( self, reading ):
-        if reading is None:
-            return str( reading )
-        return str( int( round( reading ) ) )
-
+        return str( reading )
 
     def _set_datetime( self, str_time ):
         tc = str_time.split( ':' )
