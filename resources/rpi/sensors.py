@@ -59,7 +59,7 @@ class BME280Sensors:
             self._sample()
         else:
             diff = datetime.datetime.now() - self.DATA.timestamp
-            if diff.total_seconds > 60:
+            if diff.total_seconds() > 60:
                 self._sample()
 
 

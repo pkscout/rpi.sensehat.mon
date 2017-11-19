@@ -17,7 +17,7 @@ PREREQUISITES:
 From a terminal window:
 sudo pip3 install websocket-client		(to communicate with Kodi)
 sudo pip3 install rpi-backlight			(to control the RPi Touchscreen)
-sudo pip3 install bme280                (only needed if you're using the BME280 sensor)
+sudo pip3 install RPi.bme280            (to use the BME280 temp/humidity/pressure sensor)
 
 4. To use the BH1750 ambient light sensor and/or the BME280 temperature sensor, you need to enable i2c in raspi-config. To use the Pi Camera to detect light levels, the camera must be turned on in raspi-config.  Both the camera and i2c options are under INTERFACING OPTIONS in raspi-config.
 
