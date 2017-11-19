@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.2.0.0~beta16
+# *  v.2.0.0~beta18
 # *  original RPi Weatherstation Lite code by pkscout
 
 import data.config as config
@@ -287,7 +287,8 @@ class Main:
                                            testmode = config.Get( 'testmode' ) )
         else:
             return BME280Sensors( port = config.Get( 'i2c_port' ), address = config.Get( 'bme280_address' ),
-                                         sampling = config.Get( 'bme280_sampling' ), testmode = config.Get( 'testmode' ) )            
+                                         sampling = config.Get( 'bme280_sampling' ), adjust = config.Get( 'bme280_adjust'),
+                                         testmode = config.Get( 'testmode' ) )            
 
 
     def _reading_to_str( self, reading ):

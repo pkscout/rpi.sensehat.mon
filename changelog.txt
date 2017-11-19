@@ -1,3 +1,7 @@
+v~2.0.0~beta18
+- fixes for BME280 sensor
+- added adjustment option for BME280 temperature
+
 v~2.0.0~beta17
 - fixed settings reload to support Python 3.x
 - other changes to support Python 3.x

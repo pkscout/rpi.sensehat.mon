@@ -72,6 +72,10 @@ bme280_sampling = 4
 # the i2c address of the BME280 (requires restart to take affect)
 bme280_address = 0x76
 
+# the adjustment (in Celcius) to the BME280 - most reports are it reads a couple degrees high
+# (requires restart to take affect)
+bme280_adjust = -1.5
+
 # disable if the SenseHAT is far enough away from the RPi processor to read temp properly
 # (requires restart to take affect)
 sensehat_adjust = True

@@ -15,10 +15,11 @@ except ImportError:
     
     
 class BME280Sensors:
-    def __init__( self, port=1, address=0x76, sampling=4, testmode=False ):
+    def __init__( self, port=1, address=0x76, sampling=4, adjust=-1.5, testmode=False ):
         self.TESTMODE = testmode
         self.ADDRESS = address
         self.SAMPLING = sampling
+        self.ADJUST = adjust
         self.DATA = None
         try:
             self.BUS = smbus2.SMBus( port )
@@ -39,7 +40,7 @@ class BME280Sensors:
     def Temperature( self ):
         if self.BUS:
             self._get_data()
-            return self.DATA.temperature
+            return self.DATA.temperature + self.ADJUST
         elif self.TESTMODE:        
             return random.randint( 21, 28 )
         return None
