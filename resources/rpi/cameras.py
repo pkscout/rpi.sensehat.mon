@@ -3,6 +3,7 @@
 # *  v.1.0.0
 # *  original RPi Camera classes by pkscout
 
+import time
 try:
     import random, picamera, picamera.array
     import numpy as np
@@ -16,9 +17,10 @@ except ImportError:
 
 
 class AmbientSensor:
-    def __init__ ( self, port=1, address=0x23, cmd=0x20, testmode=False ):
+    def __init__ ( self, port=1, address=0x23, cmd=0x20, oversample=10, testmode=False ):
         self.ADDRESS = address
         self.CMD = cmd
+        self.OVERSAMPLE = int( oversample )
         self.TESTMODE = testmode
         try:
             self.BUS = smbus2.SMBus( port )
@@ -29,10 +31,11 @@ class AmbientSensor:
     def LightLevel( self ):
         if self.BUS:
             level = 0
-            for x in range( 0, 4 ):
+            for x in range( 0, self.OVERSAMPLE ):
                 data = self.BUS.read_i2c_block_data( self.ADDRESS, self.CMD, 2 )
                 level = level + self._converttonumber( data )
-            return  level/4 + 1
+                time.sleep( 0.1 )
+            return  level/self.OVERSAMPLE + 1
         elif self.TESTMODE:
             return random.randint( 0, 65000 )
         return None

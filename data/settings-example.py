@@ -24,10 +24,8 @@ autodimdelta = 0.5
 # light level thesholds for dark and light
 # anything less than or equal to dark will be considered dark
 # anything greater than or equal to light will be considered light
-# for ambient light sensor target values are dark: 50, bright: 700
-# for pi camera target values are dark: 10, bright: 80
-dark = 50
-bright = 700
+dark = 10
+bright = 80
 
 # time (24 hour format) the updated sunrise and sunset should be fetched
 fetchsuntime = '3:00'
@@ -97,6 +95,10 @@ ambient_address = 0x23
 # CONTINUOUS_LOW_RES_MODE = 0x13, CONTINUOUS_HIGH_RES_MODE_1 = 0x10, CONTINUOUS_HIGH_RES_MODE_2 = 0x11
 # ONE_TIME_HIGH_RES_MODE_1 = 0x20, ONE_TIME_HIGH_RES_MODE_2 = 0x21, ONE_TIME_LOW_RES_MODE = 0x23
 ambient_cmd = 0x20
+
+# oversample takes x number of readings with 0.1 second pause between and averages them
+# (requires restart to take affect)
+ambient_oversample = 10
 
 # amount of time in minutes to look back at pressure history to determine pressure trend
 pressuredelta = 180
