@@ -28,8 +28,11 @@ class AmbientSensor:
     
     def LightLevel( self ):
         if self.BUS:
-            data = self.BUS.read_i2c_block_data( self.ADDRESS, self.CMD, 2 )
-            return self._converttonumber( data ) + 1
+            level = 0
+            for x in range( 0, 4 ):
+                data = self.BUS.read_i2c_block_data( self.ADDRESS, self.CMD, 2 )
+                level = level + self._converttonumber( data )
+            return  level/4 + 1
         elif self.TESTMODE:
             return random.randint( 0, 65000 )
         return None

@@ -52,7 +52,7 @@ class Main:
             if self.AUTODIM and ws_conn:
                 lw.log( ['checking autodim'] )
                 lightlevel = self.CAMERA.LightLevel()
-                lw.log( ['got back %s from camera' % str( lightlevel )] )
+                lw.log( ['got back %s from light sensor' % str( lightlevel )] )
                 css = self.SCREENSTATE
                 do_dark = False
                 do_bright = False
