@@ -24,7 +24,7 @@ autodimdelta = 0.5
 # light level thesholds for dark and light
 # anything less than or equal to dark will be considered dark
 # anything greater than or equal to light will be considered light
-dark = 10
+dark = 5
 bright = 80
 
 # time (24 hour format) the updated sunrise and sunset should be fetched
