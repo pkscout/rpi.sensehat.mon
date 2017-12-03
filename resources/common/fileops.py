@@ -1,5 +1,6 @@
-# v.0.3.4
+# v.0.3.6
 
+import subprocess, time
 try:
     import xbmcvfs
     isXBMC = True
@@ -43,7 +44,7 @@ def deleteFile( filename ):
         except IOError:
             log_lines.append( 'unable to delete %s' % filename )
             return False, log_lines
-        except Exception, e:
+        except Exception as e:
             log_lines.append( 'unknown error while attempting to delete %s' % filename )
             log_lines.append( e )
             return False, log_lines
@@ -66,7 +67,7 @@ def readFile( filename ):
         except IOError:
             log_lines.append( 'unable to read data from ' + filename )
             return log_lines, ''
-        except Exception, e:
+        except Exception as e:
             log_lines.append( 'unknown error while reading data from ' + filename )
             log_lines.append( e )
             return log_lines, ''
@@ -85,7 +86,7 @@ def renameFile ( filename, newfilename ):
         except IOError:
             log_lines.append( 'unable to rename %s' % filename )
             return False, log_lines
-        except Exception, e:
+        except Exception as e:
             log_lines.append( 'unknown error while attempting to rename %s' % filename )
             log_lines.append( e )
             return False, log_lines
@@ -95,6 +96,26 @@ def renameFile ( filename, newfilename ):
         return False, log_lines
 
 
+def popenWithTimeout( command, timeout ):
+    log_lines = []
+    try:
+        p = subprocess.Popen( command, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+    except OSError:
+        log_lines.append( 'error finding external script, terminating' )
+        return False, log_lines
+    except Exception as e:
+        log_lines.append( 'unknown error while attempting to run %s' % command )
+        log_lines.append( e )
+        return False, log_lines
+    for t in xrange( timeout * 4 ):
+        time.sleep( 0.25 )
+        if p.poll() is not None:
+            return p.communicate(), ''
+    p.kill()
+    log_lines.append( 'script took too long to run, terminating' )
+    return False, log_lines
+
+
 def writeFile( data, filename ):
     log_lines = []
     if type(data).__name__=='unicode':
@@ -102,15 +123,15 @@ def writeFile( data, filename ):
     try:
         thefile = xbmcvfs.File( filename, 'wb' )
     except:
-        thefile = open( filename, 'wb' )
+        thefile = open( filename, 'w' )
     try:
         thefile.write( data )
         thefile.close()
-    except IOError, e:
+    except IOError as e:
         log_lines.append( 'unable to write data to ' + filename )
         log_lines.append( e )
         return False, log_lines
-    except Exception, e:
+    except Exception as e:
         log_lines.append( 'unknown error while writing data to ' + filename )
         log_lines.append( e )
         return False, log_lines

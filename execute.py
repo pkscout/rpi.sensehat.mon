@@ -1,111 +1,140 @@
 # *  Credits:
 # *
-# *  v.1.0.0
+# *  v.2.0.0
 # *  original RPi Weatherstation Lite code by pkscout
 
-import os, sys, time
+import data.config as config
+import calendar, os, sys, time
 from datetime import datetime
 from threading import Thread
+from collections import deque
+from resources.rpi.sensors import BME280Sensors, SenseHatSensors
+from resources.rpi.screens import RPiTouchscreen, SenseHatLED
+from resources.rpi.cameras import AmbientSensor, RPiCamera
 from resources.common.xlogger import Logger
-from resources.rpi.sensors import SenseHatSensors
-from resources.rpi.screens import RPiTouchscreen
-from resources.rpi.cameras import RPiCamera
 if sys.version_info >= (2, 7):
     import json as _json
 else:
     import simplejson as _json
 
-
 p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
-lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ) )
-sensordata = Logger( logname = 'sensordata',
-                     logconfig = 'timed',
-                     format = '%(asctime)-15s %(message)s',
-                     logfile = os.path.join( p_folderpath, 'data', 'sensordata.log' ) )
+lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ),
+             numbackups = config.Get( 'logbackups' ), logdebug = str( config.Get( 'debug' ) ) )
 
 try:
-    import data.settings as settings
-    settings.readingdelta
-    settings.autodim
-    settings.dark
-    settings.light
-    settings.specialtriggers
-    settings.timedtriggers
-    settings.trigger_kodi
-    settings.kodiuri
-    settings.kodiwsport
-    settings.testmode
-except (ImportError, AttributeError, NameError) as error:
-    err_str = 'incomplete or no settings file found at %s' % os.path.join ( p_folderpath, 'data', 'settings.py' )
-    lw.log( [err_str, 'script stopped'] )
-    sys.exit( err_str )
-
-if settings.trigger_kodi:
-    if sys.version_info >= (2, 7):
-        import json as _json
-    else:
-        import simplejson as _json
-    try:
-        import websocket
-    except ImportError:
-        lw.log( ['websocket-client not installed, so the script cannot trigger Kodi weather window updates'] )
-        settings.trigger_kodi = False
-else:
-    jsontrigger = ''
+    import websocket
+    trigger_kodi = True
+except ImportError:
+    lw.log( ['websocket-client not installed, so the script cannot trigger Kodi weather window updates'], 'info' )
+    trigger_kodi = False
 
 
 
 class Main:
     def __init__( self ):
-        self.SENSOR = SenseHatSensors( testmode = settings.testmode )
-        self.SCREEN = RPiTouchscreen( testmode = settings.testmode )
-        self.CAMERA = RPiCamera( testmode = settings.testmode )
-        self.AUTODIM = settings.autodim
+        self.SENSOR = self._pick_sensor()
+        self.CAMERA = self._pick_camera()
+        self.SCREEN = self._pick_screen()
+        self.AUTODIM = config.Get( 'autodim' )
         self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
         self.SCREENSTATE = 'On'
+        self.PRESSUREHISTORY = deque()
         self.SUNRISE = ''
         self.SUNSET = ''
         self.DARKRUN = False
-        self.LIGHTRUN = False
-        jsondict = {'id':'1', 
-                    'jsonrpc':'2.0',
-                    'method':'Addons.ExecuteAddon',
-                    'params':{"addonid":"script.weatherstation.lite"}}
-        self.KODIUPDATE = _json.dumps( jsondict )
+        self.BRIGHTRUN = False
+        self.DIMRUN = False
+        self.SetBrightnessBar()
 
 
-    def Run( self ):
-        reload(settings)
+    def AutoDim( self ):
+        while True:
+            if self.AUTODIM and ws_conn:
+                lw.log( ['checking autodim'] )
+                lightlevel = self.CAMERA.LightLevel()
+                lw.log( ['got back %s from light sensor' % str( lightlevel )] )
+                css = self.SCREENSTATE
+                do_dark = False
+                do_bright = False
+                do_dim = False
+                if lightlevel:
+                    if lightlevel <= config.Get( 'dark' ):
+                        do_dark = True
+                    elif lightlevel <= config.Get( 'bright' ):
+                        do_dim = True
+                    else:
+                        do_bright = True     
+                if do_dark and not self.DARKRUN:
+                    lw.log( ['dark trigger activated with ' + config.Get( 'specialtriggers' ).get( 'dark' )] )
+                    self.HandleAction( config.Get( 'specialtriggers' ).get( 'dark' ) )
+                    self.DARKRUN = True
+                    self.BRIGHTRUN = False
+                    self.DIMRUN = False
+                elif do_bright and not self.BRIGHTRUN:
+                    lw.log( ['bright trigger activated with ' + config.Get( 'specialtriggers' ).get( 'bright' )] )
+                    self.HandleAction( config.Get( 'specialtriggers' ).get( 'bright' ) )
+                    self.DARKRUN = False
+                    self.BRIGHTRUN = True
+                    self.DIMRUN = False
+                elif do_dim and not self.DIMRUN:
+                    lw.log( ['dim trigger activated with ' + config.Get( 'specialtriggers' ).get( 'dim' )] )
+                    self.HandleAction( config.Get( 'specialtriggers' ).get( 'dim' ) )
+                    self.DARKRUN = False
+                    self.BRIGHTRUN = False
+                    self.DIMRUN = True
+                if self._is_time( config.Get( 'fetchsuntime' ) ):
+                    lw.log( ['getting updated sunrise and sunset times'] )
+                    self.HandleAction( 'GetSunriseSunset' )
+                else:
+                    triggers = config.Get( 'timedtriggers' )
+                    for onetrigger in triggers:
+                        if onetrigger[0].lower() == 'sunrise':
+                            onetrigger[0] = self.SUNRISE
+                        if onetrigger[0].lower() == 'sunset':
+                            onetrigger[0] = self.SUNSET
+                        try:
+                            checkdays = onetrigger[2]
+                        except IndexError:
+                            checkdays = ''
+                        if self._is_time( onetrigger[0], checkdays = checkdays ):
+                            lw.log( ['timed trigger %s activated with %s' % (onetrigger[0], onetrigger[1])] )
+                            self.HandleAction( onetrigger[1] )
+                if css != self.SCREENSTATE:
+                    self.SendJson( type = 'update', data = 'ScreenStatus:' + self.SCREENSTATE )
+            time.sleep( config.Get( 'autodimdelta' ) * 60 )
+
+
+    def GetScreenState( self ):
+        return self.SCREENSTATE
+
+
+    def GetSensorData( self, ledcolor=(255, 255, 255) ):
+        config.Reload()
         temperature = self.SENSOR.Temperature()
         humidity = self.SENSOR.Humidity()
         pressure = self.SENSOR.Pressure()
-        lightlevel = self.CAMERA.LightLevel()
         s_data = []
-        if temperature is not None:
-            s_data.append( 'IndoorTemp:' + self._reading_to_str( temperature ) )
-        if humidity is not None:
-            s_data.append( 'IndoorHumidity:' + self._reading_to_str( humidity ) )
-        if pressure is not None:
-            s_data.append( 'IndoorPressure:' + self._reading_to_str( pressure ) )
-        s_data.append( 'AutoDim:' + str( self.AUTODIM ) )
-        s_data.append( 'ScreenStatus:' + self.SCREENSTATE )
-        if lightlevel is not None:
-            s_data.append( 'LightLevel:' + self._reading_to_str( lightlevel ) )
+        s_data.append( 'IndoorTemp:' + self._reading_to_str( temperature ) )
+        s_data.append( 'IndoorHumidity:' + self._reading_to_str( humidity ) )
+        s_data.append( 'IndoorPressure:' + self._reading_to_str( pressure ) )
+        s_data.append( 'PressureTrend:' + self._get_pressure_trend( pressure ) )
         d_str = ''
         for item in s_data:
-            d_str = '%s\t%s' % (d_str, item)
-        lw.log( ['rounded data from sensor: ' + d_str] )
-        sensordata.log( [d_str] )
-        self._sendjson( self.KODIUPDATE )
-        self._autodim( lightlevel = lightlevel )
+            d_str = '%s;%s' % (d_str, item)
+        d_str = d_str[1:]
+        lw.log( ['sensor data: ' + d_str] )
+        led.Sweep( anchor = 7, start = 1, color = ledcolor )
+        led.PixelOn( 1, 7, ledcolor )
+        self.SendJson( type = 'update', data = d_str )
+
 
 
     def HandleAction( self, action ):
         action = action.lower()
-        if action == 'brightnessup':
+        if action == 'brightnessup' and self.SCREENSTATE == 'On':
             self.SCREEN.AdjustBrightness( direction='up' )
             lw.log( ['turned brightness up'] )
-        elif action == 'brightnessdown':
+        elif action == 'brightnessdown' and self.SCREENSTATE == 'On':
             self.SCREEN.AdjustBrightness( direction='down' )
             lw.log( ['turned brightness down'] )
         elif action == 'autodimon':
@@ -115,30 +144,71 @@ class Main:
             self.AUTODIM = False
             lw.log( ['turned autodim off'] )
         elif action.startswith( 'screenon' ):
-            if self.SCREENSTATE == 'Off':
-                sb = action.split( ':' )
-                try:
-                    brightness = sb[1]
-                except IndexError:
-                    brightness = self.STOREDBRIGHTNESS
-                self.SCREEN.SetBrightness( brightness = brightness )
-                self.SCREENSTATE = 'On'
-                lw.log( ['turned screen on to brightness of ' + str( brightness )] )
-        elif action == 'screenoff':
-            if self.SCREENSTATE == 'On':
-                self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
-                self.SCREEN.SetBrightness( brightness = 11 )
-                self.SCREENSTATE = 'Off'
-                lw.log( ['turned screen off and saved brightness as ' + str( self.STOREDBRIGHTNESS )] )
+            sb = action.split( ':' )
+            try:
+                brightness = sb[1]
+            except IndexError:
+                brightness = self.STOREDBRIGHTNESS
+            self.SCREEN.SetBrightness( brightness = brightness )
+            self.SCREENSTATE = 'On'
+            lw.log( ['turned screen on to brightness of ' + str( brightness )] )
+            if self.DIMRUN and self.BRIGHTRUN:
+                self.DARKRUN = False
+                self.DIMRUN = False
+                self.BRIGHTRUN = False
+        elif action == 'screenoff' and self.SCREENSTATE == 'On':
+            self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
+            self.SCREEN.SetBrightness( brightness = 11 )
+            self.SCREENSTATE = 'Off'
+            lw.log( ['turned screen off and saved brightness as ' + str( self.STOREDBRIGHTNESS )] )
+            if not self.DARKRUN:
+                self.DARKRUN = True
+                self.DIMRUN = True
+                self.BRIGHTRUN = True
         elif action.startswith( 'brightness:' ):
             try:
                 level = int( action.split(':')[1] )
             except ValueError:
                 level = None
             if level:
-                self.SCREEN.SetBrightness( brightness = level )
+                if  self.SCREENSTATE == 'On':
+                    self.SCREEN.SetBrightness( brightness = level )
+                    lw.log( ['set brightness to ' + str( level )] )
+                else:
+                    self.STOREDBRIGHTNESS = level
+                    lw.log( ['screen is off, so set stored brightness to ' + str( level )] )
         elif action == 'getsunrisesunset':
             self.SetSunRiseSunset()
+        self.SetBrightnessBar()
+
+
+    def SendJson( self, type, data ):
+        jdata = None
+        global got_response
+        got_response = False
+        ac = 1
+        if type.lower() == 'update':
+            jsondict = { 'id':'1', 'jsonrpc':'2.0', 'method':'Addons.ExecuteAddon',
+                         'params':{'addonid':'script.weatherstation.lite','params':{'action':'updatekodi',
+                         'plugin':'rpi-weatherstation-lite','data':data}} }
+        elif type.lower() == 'infolabelquery':
+            jsondict = { 'id':'2', 'jsonrpc':'2.0',  'method':'XBMC.GetInfoLabels',
+                         'params':{'labels':data} }
+            kodiquery = _json.dumps( jsondict )
+        if trigger_kodi and ws_conn and jsondict:
+            jdata = _json.dumps( jsondict )
+            while not got_response:
+                lw.log( ['sending Kodi ' + jdata] )
+                ws.send( jdata )
+                ac = ac + 1
+                time.sleep( 5 )
+                if ac > 5:
+                    break
+
+
+    def SetBrightnessBar( self ):
+        led.SetBar( level = self.SCREEN.GetBrightness(), anchor = 6, min = 25, max = 225,
+                    color = led.Color( config.Get( 'brightness_bar' ) ) )
 
 
     def SetSunRiseSunset( self, jsonresult = {} ):
@@ -150,43 +220,8 @@ class Main:
             if not self.AUTODIM:
                 return
             lw.log( ['getting sunrise and sunset times from Kodi'] )
-            jsondict = { 'id':'2', 'jsonrpc':'2.0',  'method':'XBMC.GetInfoLabels',
-                         'params':{'labels':['Window(Weather).Property(Today.Sunrise)', 'Window(Weather).Property(Today.Sunset)']} }
-            kodiquery = _json.dumps( jsondict )
-            self._sendjson( kodiquery )
-
-
-    def _autodim( self, lightlevel ):
-        if not self.AUTODIM:
-            return
-        do_dark = False
-        do_light = False
-        if lightlevel:
-            if lightlevel <= settings.dark:
-                do_dark = True
-            if lightlevel >= settings.light:
-                do_light = True
-        if do_dark and not self.DARKRUN:
-            lw.log( ['dark trigger activated with ' + settings.specialtriggers.get( 'dark' )] )
-            self.HandleAction( settings.specialtriggers.get( 'dark' ) )
-            self.DARKRUN = True
-            self.LIGHTRUN = False
-        elif do_light and not self.LIGHTRUN:
-            lw.log( ['light trigger activated with ' + settings.specialtriggers.get( 'light' )] )
-            self.HandleAction( settings.specialtriggers.get( 'light' ) )
-            self.DARKRUN = False
-            self.LIGHTRUN = True
-        elif self._is_time( self.SUNRISE ):
-            lw.log( ['sunrise trigger activated with ' + settings.specialtriggers.get( 'sunrise' )] )
-            self.HandleAction( settings.specialtriggers.get( 'sunrise' ) )
-        elif self._is_time( self.SUNSET ):
-            lw.log( ['sunset trigger activated with ' + settings.specialtriggers.get( 'sunset' )] )
-            self.HandleAction( settings.specialtriggers.get( 'sunset' ) )
-        else:
-            for onetrigger in settings.timedtriggers:
-                if self._is_time( onetrigger[0] ):
-                    lw.log( ['timed trigger %s activated with %s' % (onetrigger[0], onetrigger[1])] )
-                    self.HandleAction( onetrigger[1] )
+            self.SendJson( type = 'infolabelquery',
+                           data = ['Window(Weather).Property(Today.Sunrise)', 'Window(Weather).Property(Today.Sunset)'] )
 
 
     def _convert_to_24_hour( self, timestr ):
@@ -199,27 +234,66 @@ class Main:
             return '%s:%s' % (hour, hm[1])
 
 
-    def _is_time( self, thetime ):
+    def _get_pressure_trend( self, current_pressure ):
+        if current_pressure is None:
+            return 'steady'
+        self.PRESSUREHISTORY.append( current_pressure )
+        if len( self.PRESSUREHISTORY ) > config.Get( 'pressuredelta' ) / config.Get( 'readingdelta' ):
+            self.PRESSUREHISTORY.popleft()
+        previous_pressure = self.PRESSUREHISTORY[0]
+        diff = current_pressure - previous_pressure
+        if diff < 0:
+            direction = 'falling'
+        else:
+            direction = 'rising'
+        if abs( diff ) >= config.Get( 'pressurerapid' ):
+            return 'rapidly ' + direction
+        elif abs( diff ) >= config.Get( 'pressureregular' ):
+            return direction
+        return 'steady'
+
+    
+    def _is_time( self, thetime, checkdays='' ):
         action_time = self._set_datetime( thetime )
         if not action_time:
             return False
+        elif checkdays.lower().startswith( 'weekday' ) and not calendar.day_name[action_time.weekday()] in config.Get( 'weekdays' ):
+            return False
+        elif checkdays.lower().startswith( 'weekend' ) and not calendar.day_name[action_time.weekday()] in config.Get( 'weekend' ):
+            return False  
         rightnow = datetime.now()
         action_diff = rightnow - action_time
-        if abs( action_diff.total_seconds() ) < settings.readingdelta * 30: # so +/- window is total readingdelta
+        if abs( action_diff.total_seconds() ) < config.Get( 'autodimdelta' ) * 30: # so +/- window is total' ) readingdelta
             return True
         else:
             return False
 
 
+    def _pick_camera( self ):
+        if config.Get( 'which_camera' ).lower() == 'pi':
+            return RPiCamera( testmode = config.Get( 'testmode' ) )
+        else:
+            return AmbientSensor( port = config.Get( 'i2c_port' ), address = config.Get( 'ambient_address' ),
+                                  cmd = config.Get( 'ambient_cmd' ), oversample = config.Get( 'ambient_oversample'), 
+                                  testmode = config.Get( 'testmode' ) )            
+
+    
+    def _pick_screen( self ):
+        return RPiTouchscreen( testmode = config.Get( 'testmode' ) )
+    
+    
+    def _pick_sensor( self ):
+        if config.Get( 'which_sensor' ).lower() == 'sensehat':
+            return SenseHatSensors( adjust = config.Get( 'sensehat_adjust' ), factor = config.Get( 'sensehat_factor' ),
+                                           testmode = config.Get( 'testmode' ) )
+        else:
+            return BME280Sensors( port = config.Get( 'i2c_port' ), address = config.Get( 'bme280_address' ),
+                                         sampling = config.Get( 'bme280_sampling' ), adjust = config.Get( 'bme280_adjust'),
+                                         testmode = config.Get( 'testmode' ) )            
+
+
     def _reading_to_str( self, reading ):
-        return str( int( round( reading ) ) )
-
-
-    def _sendjson( self, jdata ):
-        if settings.trigger_kodi and ws_conn:
-            lw.log( ['sending Kodi ' + jdata] )
-            ws.send( jdata )
-
+        return str( reading )
 
     def _set_datetime( self, str_time ):
         tc = str_time.split( ':' )
@@ -230,12 +304,15 @@ class Main:
             fulldate = None
         return fulldate
 
-    
+
 
 def RunInWebsockets():
     def on_message( ws, message ):
+        global got_response
         lw.log( ['got back %s from Kodi' % message] )
         jm = _json.loads( message )
+        if jm.get( 'id' ) == '1':
+            got_response = True
         if jm.get( 'method' ) == 'System.OnQuit':
             ws.close()
         elif jm.get( 'method' ) == 'Other.RPIWSL_VariablePass':
@@ -243,6 +320,7 @@ def RunInWebsockets():
             if action:
                 gs.HandleAction( action )
         elif jm.get( 'id' ) == '2':
+            got_response = True
             gs.SetSunRiseSunset( jsonresult = jm.get( 'result' ) )
                 
     def on_error( ws, error ):
@@ -253,11 +331,13 @@ def RunInWebsockets():
 
     def on_close( ws ):
         lw.log( ['closing websocket connection to Kodi'] )
+        global ws_conn
+        ws_conn = False
 
     global should_quit
     global ws
     global ws_conn
-    kodiurl = 'ws://%s:%s/jsponrpc' % (settings.kodiuri, settings.kodiwsport )
+    kodiurl = 'ws://%s:%s/jsponrpc' % (config.Get( 'kodiuri' ), config.Get( 'kodiwsport' ) )
     ws = websocket.WebSocketApp( kodiurl, on_message = on_message, on_error = on_error, on_open = on_open, on_close = on_close )
     wst = Thread( target = ws.run_forever )
     wst.setDaemon( True )
@@ -272,42 +352,55 @@ def RunInWebsockets():
     except AttributeError:
         ws_conn = False
     lw.log( ['websocket status: ' + str( ws_conn )] )
-    try:
+    if ws_conn:
+        led.PixelOn( 1, 7, led.Color( config.Get( 'kodi_connection' ) ) )
         gs.SetSunRiseSunset()
-        while (not should_quit) and ws.sock.connected:
-            gs.Run()
-            lw.log( ['in websockets and waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )
-            time.sleep( settings.readingdelta * 60 )
+        gs.SendJson( type = 'update', data = 'AutoDim:%s;ScreenStatus:%s' % (str( config.Get( 'autodim' ) ), gs.GetScreenState()) )
+    try:
+        while (not should_quit) and ws_conn:
+            gs.GetSensorData( ledcolor = led.Color( config.Get( 'kodi_connection' ) ) )
+            lw.log( ['in websockets and waiting %s minutes before reading from sensor again' % str( config.Get( 'readingdelta' ) )] )
+            time.sleep( config.Get( 'readingdelta' ) * 60 )
     except KeyboardInterrupt:
         should_quit = True
-    except AttributeError:
-        pass
 
 
 if ( __name__ == "__main__" ):
-    lw.log( ['script started'], 'info' )
+    lw.log( ['script started', 'debugging set to ' + str( config.Get( 'debug') ) ], 'info' )
     global should_quit
     global ws_conn
+    global got_response
+    got_response = False
     should_quit = False
     ws_conn = False
+    firstrun = True
+    led = SenseHatLED()
+    led.PixelOn( 0, 7, led.Color( config.Get( 'script_running' ) ) )
+    led.PixelOn( 1, 7, led.Color( config.Get( 'no_kodi_connection' ) ) )
     gs = Main()
+    adt = Thread( target = gs.AutoDim )
+    adt.setDaemon( True )
+    adt.start()
     try:
         while not should_quit:
-            if settings.trigger_kodi:
+            if trigger_kodi:
                 for x in range( 1,6 ):
                     RunInWebsockets()
-                    if ws_conn:
+                    if ws_conn or not firstrun:
                         break
                     else:
-                        lw.log( ['waiting 10 seconds then trying again'] )
+                        lw.log( ['no connection to Kodi, waiting 10 seconds then trying again'] )
                         time.sleep( 10 )
             if not should_quit:
                 ws_conn = False
-                gs.Run()
-                lw.log( ['waiting %s minutes before reading from sensor again' % str( settings.readingdelta )] )
-                time.sleep( settings.readingdelta * 60 )
+                gs.GetSensorData( ledcolor = led.Color( config.Get( 'no_kodi_connection' ) ) )
+                lw.log( ['waiting %s minutes before reading from sensor again' % str( config.Get( 'readingdelta' ) )] )
+                firstrun = False
+                time.sleep( config.Get( 'readingdelta' ) * 60 )
     except KeyboardInterrupt:
         pass
+    gs.SendJson( type = 'update', data = 'IndoorTemp:None;IndoorHumidity:None;IndoorPressure:None;PressureTrend:None' )
+    led.ClearPanel()
     lw.log( ['script finished'], 'info' )
 
 
