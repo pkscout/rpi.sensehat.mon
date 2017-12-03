@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.2.0.0~beta18
+# *  v.2.0.0
 # *  original RPi Weatherstation Lite code by pkscout
 
 import data.config as config

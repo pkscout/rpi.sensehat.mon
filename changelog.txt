@@ -1,78 +1,29 @@
-v~2.0.0~beta18
-- fixes for BME280 sensor
-- added adjustment option for BME280 temperature
-
-v~2.0.0~beta17
-- fixed settings reload to support Python 3.x
-- other changes to support Python 3.x
-
-v~2.0.0~beta16
+v.2.0.0
+- changes to support Python 3.x
 - added support for BME280 Temperature, Humidity, Pressure sensor
 - added support for i2c ambient light sensor 
-- SenseHat now returns lower of two temps from pressure and humidity sensors
-- sends None to Kodi if sensor does not return data
-
-v.2.0.0~beta15
-- added brightness level indicator on SenseHat LED
-
-v.2.0.0~beta14
-- fix for getting sunrise/sunset running multiple times in a row
-- added logic to resend JSON call if no response is received from a Kodi
-- send screen status at websocket connection (so a Kodi restart restores state)
-- fixes for LED control
-- re-enabled some basic temperature adjustment
-
-v.2.0.0~beta13
+- now communicating data to Kodi via Websockets
+- moved fetch of sunrise/sunset times to dedicated setting
+- added option to have timed triggers run on weekdays or weekends
+- added command line python script to change brightness
+- added code to control SenseHat LED to provide some feedback
+- pressure trend now calculated in script
+- sensor checks and autodim checks now run on separate schedules
 - autodim includes three levels: dark, dim, bright
-- timed triggered or manual display off cannot be overriden by light levels
-  must turn back on manually or with another timed trigger
-
-v.2.0.0~beta12
 - autodim now sends screen status change notice to Kodi immediately
 - autodim only runs if Kodi is running
+- SenseHat now returns lower of two temps from pressure and humidity sensors
+- sends None to Kodi if sensor does not return data
+- added logic to resend JSON call if no response is received from a Kodi
+- send screen status at websocket connection (so a Kodi restart restores state)
+- timed triggered or manual display off cannot be overriden by light levels
+  must turn back on manually or with another timed trigger
 - removed separate log for sensor data
 - functioning systemd service file included
-
-v.2.0.0~beta11
-- moved autodim to separate thread
-- sensor checks and autodim checks now run on separate schedules
-- moved fetch of sunrise/sunset times to dedicated setting
-
-v.2.0.0~beta10
-- fix for crash on dark
-
-v.2.0.0~beta9
 - refactored settings so defaults are stored in code and can be overridden
   (instead of requiring a settings file to be present)
-
-v.2.0.0~beta8
-- added option to use any tuple for color choices in LED
-
-v.2.0.0~beta7
-- added code to control SenseHat LED to provide some feedback
-
-v.2.0.0~beta6
-- fix for crash if settings file is missing or incomplete
-
-v.2.0.0~beta5
-- setting brightness when screen is off now stores new brightness level to be used later
-
-v.2.0.0~beta4
-- changed handlers so screen brightness can't be set if screenstate is OFF
-
-v.2.0.0~beta3
 - script tries websocket connection persistently only at first start
-- change to autodim timing to fix communications with Kodi
-
-v.2.0.0~beta2
 - turned debug logging off by default
-
-v.2.0.0~beta1
-- added option to have timed triggers run on weekdays or weekends
-- sunrise and sunset are now timed triggers
-- added command line python script to change brightness
-- now communicating data to Kodi via Websockets
-- pressure trend now calculated in script
 
 v.1.0.0
 - feature complete
