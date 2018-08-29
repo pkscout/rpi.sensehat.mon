@@ -1,6 +1,6 @@
 # *  Credits:
 # *
-# *  v.2.0.0
+# *  v.2.0.1
 # *  original RPi Weatherstation Lite code by pkscout
 
 import data.config as config
@@ -113,11 +113,15 @@ class Main:
         temperature = self.SENSOR.Temperature()
         humidity = self.SENSOR.Humidity()
         pressure = self.SENSOR.Pressure()
+        pressuretrend = self.SENSOR.PressureTrend()
         s_data = []
         s_data.append( 'IndoorTemp:' + self._reading_to_str( temperature ) )
         s_data.append( 'IndoorHumidity:' + self._reading_to_str( humidity ) )
         s_data.append( 'IndoorPressure:' + self._reading_to_str( pressure ) )
-        s_data.append( 'PressureTrend:' + self._get_pressure_trend( pressure ) )
+        if pressuretrend not None:
+            s_data.append( 'PressureTrend:' + pressuretrend )
+        else:
+            s_data.append( 'PressureTrend:' + self._get_pressure_trend( pressure ) )
         d_str = ''
         for item in s_data:
             d_str = '%s;%s' % (d_str, item)

@@ -53,7 +53,9 @@ class BME280Sensors:
         elif self.TESTMODE:        
             return random.randint( 990, 1020 )
         return None
-
+        
+    def PressureTrend( self ):
+        return None
     
     def _get_data( self ):
         if not self.DATA:
@@ -121,6 +123,11 @@ class SenseHatSensors:
         elif self.TESTMODE:        
             return random.randint( 990, 1020 )
         return None
+
+    def PressureTrend( self ):
+        return None
+    
+
 
         
             
