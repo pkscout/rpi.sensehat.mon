@@ -1,3 +1,6 @@
+v.2.0.1
+- if sensor can return pressure trend use that instead of the calculated pressure trend
+
 v.2.0.0
 - changes to support Python 3.x
 - added support for BME280 Temperature, Humidity, Pressure sensor
@@ -14,7 +17,7 @@ v.2.0.0
 - autodim only runs if Kodi is running
 - SenseHat now returns lower of two temps from pressure and humidity sensors
 - sends None to Kodi if sensor does not return data
-- added logic to resend JSON call if no response is received from a Kodi
+- added logic to resend JSON call if no response is received from Kodi
 - send screen status at websocket connection (so a Kodi restart restores state)
 - timed triggered or manual display off cannot be overriden by light levels
   must turn back on manually or with another timed trigger
