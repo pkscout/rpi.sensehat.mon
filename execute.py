@@ -1,9 +1,9 @@
 # *  Credits:
 # *
-# *  v.2.0.1
+# *  v.2.0.2
 # *  original RPi Weatherstation Lite code by pkscout
 
-import data.config as config
+import resources.config as config
 import calendar, os, sys, time
 from datetime import datetime
 from threading import Thread

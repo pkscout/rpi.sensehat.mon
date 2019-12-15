@@ -1,3 +1,6 @@
+v.2.0.2
+- changed location of default config file
+
 v.2.0.1
 - if sensor can return pressure trend use that instead of the calculated pressure trend
 
