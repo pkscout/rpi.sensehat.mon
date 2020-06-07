@@ -29,8 +29,8 @@ class RPiTouchscreen:
         else:
             self.CURRENTBRIGHTNESS = 100
             self.TOUCHSCREEN = False
-            
-    
+
+
     def SetBrightness( self, brightness, themax=100, themin=0, smooth=True, duration=5 ):
         brightness = int( brightness )
         if brightness == self.CURRENTBRIGHTNESS:
@@ -75,8 +75,8 @@ class SenseHatLED:
         self.PALETTE = {'green':(0, 255, 0), 'yellow':(255, 255, 0), 'blue':(0, 0, 255),
                         'red':(255, 0, 0), 'white':(255,255,255), 'nothing':(0,0,0),
                         'pink':(255,105, 180)}
-    
-    
+
+
     def Blink( self, x, y, color=(255, 255, 255), pause=0.2, pivot=False ):
         if pivot:
             bx = y
@@ -109,12 +109,12 @@ class SenseHatLED:
     def PixelOff( self, x, y ):
         if self.SENSE:
             self.SENSE.set_pixel( x, y, 0, 0, 0 )
-        
-        
+
+
     def PixelOn( self, x, y, color=(255, 255, 255) ):
         if self.SENSE:
             self.SENSE.set_pixel( x, y, color )
-        
+
 
     def SetBar( self, level, vertical=False, anchor=0, themin=0, themax=255, color=(255, 255, 255) ):
         step = (themax - themin)/8
@@ -145,4 +145,3 @@ class SenseHatLED:
         while current >= start:
             self.Blink( current, anchor, color, pause, vertical )
             current = current - 1
-    

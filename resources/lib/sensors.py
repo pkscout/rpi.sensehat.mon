@@ -28,8 +28,8 @@ class BME280Sensors:
             bme280.load_calibration_params( self.BUS, self.ADDRESS )
         else:
             self.BUS = None
-    
-    
+
+
     def Humidity( self ):
         if self.BUS:
             self._get_data()
@@ -43,7 +43,7 @@ class BME280Sensors:
         if self.BUS:
             self._get_data()
             return self.DATA.temperature + self.ADJUST
-        elif self.TESTMODE:        
+        elif self.TESTMODE:
             return random.randint( 21, 28 )
         return None
 
@@ -52,10 +52,10 @@ class BME280Sensors:
         if self.BUS:
             self._get_data()
             return self.DATA.pressure
-        elif self.TESTMODE:        
+        elif self.TESTMODE:
             return random.randint( 990, 1020 )
         return None
-        
+
     def PressureTrend( self ):
         return None
 
@@ -91,7 +91,7 @@ class SenseHatSensors:
                 reading = self.SENSE.get_humidity()
                 if reading:
                     return reading
-        elif self.TESTMODE:        
+        elif self.TESTMODE:
             return random.randint( 43, 68 )
         return None
 
@@ -112,7 +112,7 @@ class SenseHatSensors:
                         return int( round( reading - ((cpu_temp - reading)/self.FACTOR), 0 ) )
                     else:
                         return reading
-        elif self.TESTMODE:        
+        elif self.TESTMODE:
             return random.randint( 21, 28 )
         return None
 
@@ -123,7 +123,7 @@ class SenseHatSensors:
                 reading = self.SENSE.get_pressure()
                 if reading:
                     return reading
-        elif self.TESTMODE:        
+        elif self.TESTMODE:
             return random.randint( 990, 1020 )
         return None
 

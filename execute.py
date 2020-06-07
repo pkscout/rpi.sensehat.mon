@@ -91,7 +91,7 @@ class Main:
                             lw.log( ['timed trigger %s activated with %s' % (onetrigger[0], onetrigger[1])] )
                             self.HandleAction( onetrigger[1] )
                 if css != self.SCREENSTATE:
-                    self.SendJson( type = 'update', data = 'ScreenStatus:' + self.SCREENSTATE )
+                    self.SendJson( thetype = 'update', data = 'ScreenStatus:' + self.SCREENSTATE )
             time.sleep( config.Get( 'autodimdelta' ) * 60 )
 
 
@@ -120,7 +120,7 @@ class Main:
         lw.log( ['sensor data: ' + d_str] )
         led.Sweep( anchor = 7, start = 1, color = ledcolor )
         led.PixelOn( 1, 7, ledcolor )
-        self.SendJson( type = 'update', data = d_str )
+        self.SendJson( thetype = 'update', data = d_str )
 
 
 
@@ -201,7 +201,7 @@ class Main:
 
 
     def SetBrightnessBar( self ):
-        led.SetBar( level = self.SCREEN.GetBrightness(), anchor = 6, min = 25, max = 225,
+        led.SetBar( level = self.SCREEN.GetBrightness(), anchor = 6, themin = 25, themax = 225,
                     color = led.Color( config.Get( 'brightness_bar' ) ) )
 
 
@@ -214,7 +214,7 @@ class Main:
             if not self.AUTODIM:
                 return
             lw.log( ['getting sunrise and sunset times from Kodi'] )
-            self.SendJson( type = 'infolabelquery',
+            self.SendJson( thetype = 'infolabelquery',
                            data = ['Window(Weather).Property(Today.Sunrise)', 'Window(Weather).Property(Today.Sunset)'] )
 
 
@@ -349,7 +349,7 @@ def RunInWebsockets():
     if ws_conn:
         led.PixelOn( 1, 7, led.Color( config.Get( 'kodi_connection' ) ) )
         gs.SetSunRiseSunset()
-        gs.SendJson( type = 'update', data = 'AutoDim:%s;ScreenStatus:%s' % (str( config.Get( 'autodim' ) ), gs.GetScreenState()) )
+        gs.SendJson( thetype = 'update', data = 'AutoDim:%s;ScreenStatus:%s' % (str( config.Get( 'autodim' ) ), gs.GetScreenState()) )
     try:
         while (not should_quit) and ws_conn:
             gs.GetSensorData( ledcolor = led.Color( config.Get( 'kodi_connection' ) ) )
@@ -393,6 +393,6 @@ if ( __name__ == "__main__" ):
                 time.sleep( config.Get( 'readingdelta' ) * 60 )
     except KeyboardInterrupt:
         pass
-    gs.SendJson( type = 'update', data = 'IndoorTemp:None;IndoorHumidity:None;IndoorPressure:None;PressureTrend:None' )
+    gs.SendJson( thetype = 'update', data = 'IndoorTemp:None;IndoorHumidity:None;IndoorPressure:None;PressureTrend:None' )
     led.ClearPanel()
     lw.log( ['script finished'], 'info' )
