@@ -1,6 +1,6 @@
 
 import resources.config as config
-import calendar, json, os, sys, time
+import calendar, json, os, time
 from datetime import datetime
 from threading import Thread
 from collections import deque
@@ -54,7 +54,7 @@ class Main:
                     elif lightlevel <= config.Get( 'bright' ):
                         do_dim = True
                     else:
-                        do_bright = True     
+                        do_bright = True
                 if do_dark and not self.DARKRUN:
                     lw.log( ['dark trigger activated with ' + config.Get( 'specialtriggers' ).get( 'dark' )] )
                     self.HandleAction( config.Get( 'specialtriggers' ).get( 'dark' ) )
@@ -177,19 +177,18 @@ class Main:
         self.SetBrightnessBar()
 
 
-    def SendJson( self, type, data ):
+    def SendJson( self, thetype, data ):
         jdata = None
         global got_response
         got_response = False
         ac = 1
-        if type.lower() == 'update':
+        if thetype.lower() == 'update':
             jsondict = { 'id':'1', 'jsonrpc':'2.0', 'method':'Addons.ExecuteAddon',
                          'params':{'addonid':'script.weatherstation.lite','params':{'action':'updatekodi',
                          'plugin':'rpi-weatherstation-lite','data':data}} }
-        elif type.lower() == 'infolabelquery':
+        elif thetype.lower() == 'infolabelquery':
             jsondict = { 'id':'2', 'jsonrpc':'2.0',  'method':'XBMC.GetInfoLabels',
                          'params':{'labels':data} }
-            kodiquery = json.dumps( jsondict )
         if trigger_kodi and ws_conn and jsondict:
             jdata = json.dumps( jsondict )
             while not got_response:
@@ -206,7 +205,7 @@ class Main:
                     color = led.Color( config.Get( 'brightness_bar' ) ) )
 
 
-    def SetSunRiseSunset( self, jsonresult = {} ):
+    def SetSunRiseSunset( self, jsonresult=None ):
         if jsonresult:
             self.SUNRISE = self._convert_to_24_hour( jsonresult.get( 'Window(Weather).Property(Today.Sunrise)' ) )
             self.SUNSET = self._convert_to_24_hour( jsonresult.get( 'Window(Weather).Property(Today.Sunset)' ) )
@@ -247,7 +246,7 @@ class Main:
             return direction
         return 'steady'
 
-    
+
     def _is_time( self, thetime, checkdays='' ):
         action_time = self._set_datetime( thetime )
         if not action_time:
@@ -255,7 +254,7 @@ class Main:
         elif checkdays.lower().startswith( 'weekday' ) and not calendar.day_name[action_time.weekday()] in config.Get( 'weekdays' ):
             return False
         elif checkdays.lower().startswith( 'weekend' ) and not calendar.day_name[action_time.weekday()] in config.Get( 'weekend' ):
-            return False  
+            return False
         rightnow = datetime.now()
         action_diff = rightnow - action_time
         if abs( action_diff.total_seconds() ) < config.Get( 'autodimdelta' ) * 30: # so +/- window is total' ) readingdelta
@@ -269,14 +268,14 @@ class Main:
             return RPiCamera( testmode = config.Get( 'testmode' ) )
         else:
             return AmbientSensor( port = config.Get( 'i2c_port' ), address = config.Get( 'ambient_address' ),
-                                  cmd = config.Get( 'ambient_cmd' ), oversample = config.Get( 'ambient_oversample'), 
-                                  testmode = config.Get( 'testmode' ) )            
+                                  cmd = config.Get( 'ambient_cmd' ), oversample = config.Get( 'ambient_oversample'),
+                                  testmode = config.Get( 'testmode' ) )
 
-    
+
     def _pick_screen( self ):
         return RPiTouchscreen( testmode = config.Get( 'testmode' ) )
-    
-    
+
+
     def _pick_sensor( self ):
         if config.Get( 'which_sensor' ).lower() == 'sensehat':
             return SenseHatSensors( adjust = config.Get( 'sensehat_adjust' ), factor = config.Get( 'sensehat_factor' ),
@@ -284,7 +283,7 @@ class Main:
         else:
             return BME280Sensors( port = config.Get( 'i2c_port' ), address = config.Get( 'bme280_address' ),
                                          sampling = config.Get( 'bme280_sampling' ), adjust = config.Get( 'bme280_adjust'),
-                                         testmode = config.Get( 'testmode' ) )            
+                                         testmode = config.Get( 'testmode' ) )
 
 
     def _reading_to_str( self, reading ):
@@ -317,7 +316,7 @@ def RunInWebsockets():
         elif jm.get( 'id' ) == '2':
             got_response = True
             gs.SetSunRiseSunset( jsonresult = jm.get( 'result' ) )
-                
+
     def on_error( ws, error ):
         lw.log( ['got an error reading data from Kodi: ' + str( error )] )
 
@@ -397,5 +396,3 @@ if ( __name__ == "__main__" ):
     gs.SendJson( type = 'update', data = 'IndoorTemp:None;IndoorHumidity:None;IndoorPressure:None;PressureTrend:None' )
     led.ClearPanel()
     lw.log( ['script finished'], 'info' )
-
-

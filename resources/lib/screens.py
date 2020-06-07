@@ -4,6 +4,7 @@
 # *  original RPi Screen classes by pkscout
 
 import time
+from six import string_types
 try:
     from rpi_backlight import Backlight
     has_backlight = True
@@ -11,9 +12,9 @@ except ImportError:
     has_backlight = False
 try:
     from sense_hat import SenseHat
+    has_sensehat = True
 except ImportError:
-    pass
-from six import string_types
+    has_sensehat = False
 
 
 
@@ -30,14 +31,14 @@ class RPiTouchscreen:
             self.TOUCHSCREEN = False
             
     
-    def SetBrightness( self, brightness, max=100, min=0, smooth=True, duration=5 ):
+    def SetBrightness( self, brightness, themax=100, themin=0, smooth=True, duration=5 ):
         brightness = int( brightness )
         if brightness == self.CURRENTBRIGHTNESS:
             return
-        if brightness > max:
-            brightness = max
-        elif brightness < min:
-            brightness = min
+        if brightness > themax:
+            brightness = themax
+        elif brightness < themin:
+            brightness = themin
         if self.TOUCHSCREEN:
             with self.BACKLIGHT.fade( duration=duration ):
                 self.BACKLIGHT.brightness = brightness
@@ -45,16 +46,16 @@ class RPiTouchscreen:
 
 
     def AdjustBrightness( self, direction, step=25, smooth=True, duration=1 ):
-        max = int( 255 / step ) * step
-        min = step
-        if self.CURRENTBRIGHTNESS > max:
-            self.CURRENTBRIGHTNESS = max
-        elif self.CURRENTBRIGHTNESS < min:
-            self.CURRENTBRIGHTNESS = min
+        themax = int( 255 / step ) * step
+        themin = step
+        if self.CURRENTBRIGHTNESS > themax:
+            self.CURRENTBRIGHTNESS = themax
+        elif self.CURRENTBRIGHTNESS < themin:
+            self.CURRENTBRIGHTNESS = themin
         if direction == 'down':
             step = -1 * step
         new_brightness = self.CURRENTBRIGHTNESS + step
-        self.SetBrightness( new_brightness, max = max, min = min, duration = duration )
+        self.SetBrightness( new_brightness, themax=themax, themin=themin, duration=duration )
 
 
     def GetBrightness( self ):
@@ -64,14 +65,13 @@ class RPiTouchscreen:
 
 class SenseHatLED:
     def __init__( self, low_light=True, rotate=False ):
-        try:
+        if has_sensehat:
             self.SENSE = SenseHat()
-        except (OSError, NameError) as error:
-            self.SENSE = None
-        if self.SENSE:
             self.SENSE.low_light = low_light
             if rotate:
                 self.SENSE.set_rotation( 180 )
+        else:
+            self.SENSE = None
         self.PALETTE = {'green':(0, 255, 0), 'yellow':(255, 255, 0), 'blue':(0, 0, 255),
                         'red':(255, 0, 0), 'white':(255,255,255), 'nothing':(0,0,0),
                         'pink':(255,105, 180)}
@@ -116,9 +116,9 @@ class SenseHatLED:
             self.SENSE.set_pixel( x, y, color )
         
 
-    def SetBar( self, level, vertical=False, anchor=0, min=0, max=255, color=(255, 255, 255) ):
-        step = (max - min)/8
-        height = int( (level - min)/step )
+    def SetBar( self, level, vertical=False, anchor=0, themin=0, themax=255, color=(255, 255, 255) ):
+        step = (themax - themin)/8
+        height = int( (level - themin)/step )
         for loc in range( 0, 7 ):
             if vertical:
                 x = anchor
