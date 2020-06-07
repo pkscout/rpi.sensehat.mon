@@ -1,24 +1,15 @@
-# *  Credits:
-# *
-# *  v.2.0.2
-# *  original RPi Weatherstation Lite code by pkscout
 
 import resources.config as config
-import calendar, os, sys, time
+import calendar, json, os, sys, time
 from datetime import datetime
 from threading import Thread
 from collections import deque
-from resources.rpi.sensors import BME280Sensors, SenseHatSensors
-from resources.rpi.screens import RPiTouchscreen, SenseHatLED
-from resources.rpi.cameras import AmbientSensor, RPiCamera
-from resources.common.xlogger import Logger
-if sys.version_info >= (2, 7):
-    import json as _json
-else:
-    import simplejson as _json
+from resources.lib.sensors import BME280Sensors, SenseHatSensors
+from resources.lib.screens import RPiTouchscreen, SenseHatLED
+from resources.lib.cameras import AmbientSensor, RPiCamera
+from resources.lib.xlogger import Logger
 
-p_folderpath, p_filename = os.path.split( os.path.realpath(__file__) )
-lw = Logger( logfile = os.path.join( p_folderpath, 'data', 'logfile.log' ),
+lw = Logger( logfile=os.path.join(os.path.dirname( __file__ ), 'data', 'logs', 'logfile.log' ),
              numbackups = config.Get( 'logbackups' ), logdebug = str( config.Get( 'debug' ) ) )
 
 try:
@@ -118,7 +109,7 @@ class Main:
         s_data.append( 'IndoorTemp:' + self._reading_to_str( temperature ) )
         s_data.append( 'IndoorHumidity:' + self._reading_to_str( humidity ) )
         s_data.append( 'IndoorPressure:' + self._reading_to_str( pressure ) )
-        if pressuretrend not None:
+        if pressuretrend:
             s_data.append( 'PressureTrend:' + pressuretrend )
         else:
             s_data.append( 'PressureTrend:' + self._get_pressure_trend( pressure ) )
@@ -198,9 +189,9 @@ class Main:
         elif type.lower() == 'infolabelquery':
             jsondict = { 'id':'2', 'jsonrpc':'2.0',  'method':'XBMC.GetInfoLabels',
                          'params':{'labels':data} }
-            kodiquery = _json.dumps( jsondict )
+            kodiquery = json.dumps( jsondict )
         if trigger_kodi and ws_conn and jsondict:
-            jdata = _json.dumps( jsondict )
+            jdata = json.dumps( jsondict )
             while not got_response:
                 lw.log( ['sending Kodi ' + jdata] )
                 ws.send( jdata )
@@ -314,7 +305,7 @@ def RunInWebsockets():
     def on_message( ws, message ):
         global got_response
         lw.log( ['got back %s from Kodi' % message] )
-        jm = _json.loads( message )
+        jm = json.loads( message )
         if jm.get( 'id' ) == '1':
             got_response = True
         if jm.get( 'method' ) == 'System.OnQuit':

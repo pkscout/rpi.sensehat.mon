@@ -5,9 +5,10 @@
 
 import time
 try:
-    import rpi_backlight
+    from rpi_backlight import Backlight
+    has_backlight = True
 except ImportError:
-    pass
+    has_backlight = False
 try:
     from sense_hat import SenseHat
 except ImportError:
@@ -20,27 +21,26 @@ class RPiTouchscreen:
     def __init__( self, testmode=False ):
         self.BDIRECTION = 1
         self.TESTMODE = testmode
-        try:
-            self.CURRENTBRIGHTNESS = rpi_backlight.get_actual_brightness()
+        if has_backlight:
+            self.BACKLIGHT = Backlight()
+            self.CURRENTBRIGHTNESS = self.BACKLIGHT.brightness
             self.TOUCHSCREEN = True
-        except NameError:
-            self.CURRENTBRIGHTNESS = 255
+        else:
+            self.CURRENTBRIGHTNESS = 100
             self.TOUCHSCREEN = False
             
     
-    def SetBrightness( self, brightness, max=255, min=11, smooth=True, duration=5 ):
+    def SetBrightness( self, brightness, max=100, min=0, smooth=True, duration=5 ):
         brightness = int( brightness )
         if brightness == self.CURRENTBRIGHTNESS:
             return
         if brightness > max:
             brightness = max
-        elif brightness < 11:
-            # I have no idea why the fork the absolute minimum is 11, but it is
-            brightness = 11
         elif brightness < min:
             brightness = min
         if self.TOUCHSCREEN:
-            rpi_backlight.set_brightness( brightness, smooth = smooth, duration = duration )
+            with self.BACKLIGHT.fade( duration=duration ):
+                self.BACKLIGHT.brightness = brightness
             self.CURRENTBRIGHTNESS = brightness
 
 

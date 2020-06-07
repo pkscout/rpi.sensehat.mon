@@ -1,3 +1,6 @@
+v.3.0.0
+- updates to work in Buster (not backward compatible)
+
 v.2.0.2
 - changed location of default config file
 
