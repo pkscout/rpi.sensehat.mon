@@ -1,3 +1,6 @@
+v.3.0.1
+- restructured script for best practice code layout
+
 v.3.0.0
 - updates to work in Buster (not backward compatible)
 
