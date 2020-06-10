@@ -396,12 +396,14 @@ class Main:
             self.SCREENCONTROL = None
             self.PASSSENSORDATA = None
             time.sleep( 30 )
-        self.LW.log( ['script finished'], 'info' )
 
 
     def signal_handler(self, sig, frame):
-        self.SCREENCONTROL.Stop()
-        self.PASSSENSORDATA.Stop()
+        try:
+            self.SCREENCONTROL.Stop()
+            self.PASSSENSORDATA.Stop()
+        except AttributeError:
+            self.LW.log( ['threads not running, so no need to stop them'] )
         self.LW.log( ['script finished'], 'info' )
         sys.exit(0)
 
@@ -422,7 +424,8 @@ class Main:
                 wsc.close()
 
         def on_error( ws, error ):
-            pass
+            if not str( error ) == '0':
+                self.LW.log( ['error reading data from Kodi: ' + str( error )] )
 
         def on_open( ws ):
             self.LW.log( ['opening websocket connection to Kodi'], 'info' )
