@@ -1,6 +1,6 @@
 
 import resources.config as config
-import calendar, json, os, sys, time
+import calendar, json, os, time
 from datetime import datetime
 from threading import Thread
 from collections import deque
