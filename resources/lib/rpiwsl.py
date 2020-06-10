@@ -40,11 +40,11 @@ class ScreenControl:
                               'ScreenOn:50', 'ScreenOn:60', 'ScreenOn:70', 'ScreenOn:80', 'ScreenOn:90',
                               'ScreenOn:100', 'None']
         self.KODIDAYMAP    = ['', 'Weekdays', 'Weekend']
+        self.KODICAMERAMAP = ['Ambient', 'Pi']
         self.LW = lw
         self.WSC = None
         self.KEEPRUNNING = True
-        self.CAMERA = self._pick_camera()
-        self.SCREEN = self._pick_screen()
+        self.UpdateSettings()
         self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
         self.SCREENSTATE = 'On'
         self.LED = SenseHatLED()
@@ -56,7 +56,6 @@ class ScreenControl:
         self.BRIGHTRUN = False
         self.DIMRUN = False
         self.WAITTIME = config.Get( 'autodimdelta' ) * 60
-        self.UpdateSettings()
 
 
     def Start( self ):
@@ -194,6 +193,8 @@ class ScreenControl:
             self._map_returned_settings( thedata )
         else:
             self._get_config_settings()
+        self.CAMERA = self._pick_camera()
+        self.SCREEN = self._pick_screen()
         if not self.AUTODIM:
             self.DARKRUN = False
             self.BRIGHTRUN = False
@@ -202,6 +203,7 @@ class ScreenControl:
 
 
     def _get_config_settings( self ):
+        self.WHICHCAMERA = config.Get( 'which_camera' )
         self.FIXEDBRIGHTNESS = 100
         self.AUTODIM = config.Get( 'autodim' )
         self.DARKACTION = config.Get( 'specialtriggers' ).get( 'dark' )
@@ -213,6 +215,7 @@ class ScreenControl:
 
 
     def _map_returned_settings( self, thedata ):
+        self.WHICHCAMERA = self.KODICAMERAMAP[thedata.get( 'which_camera', 0 )]    
         self.FIXEDBRIGHTNESS = thedata.get( 'fixed_brightness' )
         self.AUTODIM = thedata.get( 'auto_dim', True )
         self.DARKACTION = self.KODIACTIONMAP[thedata.get( 'dark_action', 0 )]
@@ -278,7 +281,8 @@ class ScreenControl:
 
 
     def _pick_camera( self ):
-        if config.Get( 'which_camera' ).lower() == 'pi':
+        self.LW.log( ['setting up %s light sensor' % self.WHICHCAMERA] )
+        if self.WHICHCAMERA.lower() == 'pi':
             return RPiCamera( testmode = config.Get( 'testmode' ) )
         else:
             return AmbientSensor( port = config.Get( 'i2c_port' ), address = config.Get( 'ambient_address' ),
@@ -297,11 +301,12 @@ class PassSensorData:
         self.KEEPRUNNING = True
         self.LW = lw
         self.WSC = None
+        self.KODISENSORMAP = ['BME280', 'Sensehat']
         self.LED = SenseHatLED()
         self.LEDCOLOR = ledcolor
-        self.SENSOR = self._pick_sensor()
         self.READINGDELTA = config.Get( 'readingdelta' ) * 60
         self.PRESSUREHISTORY = deque()
+        self.UpdateSettings()
 
 
     def Start( self ):
@@ -339,6 +344,14 @@ class PassSensorData:
         self.WSC = wsc
 
 
+    def UpdateSettings( self, thedata=None ):
+        if thedata:
+            self.WHICHSENSOR = self.KODISENSORMAP[thedata.get( 'which_sensor', 0 )]
+        else:
+            self.WHICHSENSOR = config.Get( 'which_sensor' )
+        self.SENSOR = self._pick_sensor()
+
+
     def _get_pressure_trend( self, current_pressure ):
         if current_pressure is None:
             return 'steady'
@@ -359,7 +372,8 @@ class PassSensorData:
 
 
     def _pick_sensor( self ):
-        if config.Get( 'which_sensor' ).lower() == 'sensehat':
+        self.LW.log( ['setting up %s weather sensor' % self.WHICHSENSOR] )
+        if self.WHICHSENSOR.lower() == 'sensehat':
             return SenseHatSensors( adjust = config.Get( 'sensehat_adjust' ), factor = config.Get( 'sensehat_factor' ),
                                            testmode = config.Get( 'testmode' ) )
         else:
@@ -416,6 +430,7 @@ class Main:
                 self.SCREENCONTROL.SetSunriseSunset( jsonresult=jm.get( 'result' ) )
             elif jm.get( 'method' ) == 'Other.ReturningSettings':
                 self.SCREENCONTROL.UpdateSettings( thedata=jm.get( 'params', {} ).get( 'data' ) )
+                self.PASSSENSORDATA.UpdateSettings( thedata=jm.get( 'params', {} ).get( 'data' ) )
             elif jm.get( 'method' ) == 'Other.ScreenOn':
                 self.SCREENCONTROL.HandleAction( 'screenon' )
             elif jm.get( 'method' ) == 'Other.ScreenOff':

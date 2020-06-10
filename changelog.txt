@@ -1,3 +1,6 @@
+v.3.1.0
+- added ability to pick sensors from GUI interface
+
 v.3.0.4
 - more error handling at quit
 
