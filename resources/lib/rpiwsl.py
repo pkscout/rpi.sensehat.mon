@@ -36,7 +36,7 @@ def _send_json( wsc, lw, thetype, thedata ):
 class ScreenControl:
 
     def __init__( self, lw ):
-        self.KODIACTIONMAP = ['Screen Off', 'ScreenOn:10', 'ScreenOn:20', 'ScreenOn:30', 'ScreenOn:40',
+        self.KODIACTIONMAP = ['ScreenOff', 'ScreenOn:10', 'ScreenOn:20', 'ScreenOn:30', 'ScreenOn:40',
                               'ScreenOn:50', 'ScreenOn:60', 'ScreenOn:70', 'ScreenOn:80', 'ScreenOn:90',
                               'ScreenOn:100', 'None']
         self.KODIDAYMAP    = ['', 'Weekdays', 'Weekend']
@@ -79,25 +79,25 @@ class ScreenControl:
                         do_bright = True
                 if do_dark and not self.DARKRUN:
                     self.LW.log( ['dark trigger activated with ' + self.DARKACTION] )
-                    self._handle_action( self.DARKACTION )
+                    self.HandleAction( self.DARKACTION )
                     self.DARKRUN = True
                     self.BRIGHTRUN = False
                     self.DIMRUN = False
                 elif do_bright and not self.BRIGHTRUN:
                     self.LW.log( ['bright trigger activated with ' + self.BRIGHTACTION] )
-                    self._handle_action( self.BRIGHTACTION )
+                    self.HandleAction( self.BRIGHTACTION )
                     self.DARKRUN = False
                     self.BRIGHTRUN = True
                     self.DIMRUN = False
                 elif do_dim and not self.DIMRUN:
                     self.LW.log( ['dim trigger activated with ' + self.DIMACTION] )
-                    self._handle_action( self.DIMACTION )
+                    self.HandleAction( self.DIMACTION )
                     self.DARKRUN = False
                     self.BRIGHTRUN = False
                     self.DIMRUN = True
                 if self._is_time( config.Get( 'fetchsuntime' ) ):
                     self.LW.log( ['getting updated sunrise and sunset times'] )
-                    self._handle_action( 'GetSunriseSunset' )
+                    self.HandleAction( 'GetSunriseSunset' )
                 else:
                     triggers = self.TIMEDTRIGGERS
                     for onetrigger in triggers:
@@ -111,7 +111,7 @@ class ScreenControl:
                             checkdays = ''
                         if self._is_time( onetrigger[0], checkdays=checkdays ):
                             self.LW.log( ['timed trigger %s activated with %s' % (onetrigger[0], onetrigger[1])] )
-                            self._handle_action( onetrigger[1] )
+                            self.HandleAction( onetrigger[1] )
                 if css != self.SCREENSTATE:
                     _send_json( self.WSC, self.LW, thetype='update', thedata='ScreenStatus:' + self.SCREENSTATE )
             time.sleep( self.WAITTIME )
@@ -121,6 +121,55 @@ class ScreenControl:
         self.LW.log( ['closing down ScreenControl thread'], 'info' )
         self.LED.ClearPanel()
         self.KEEPRUNNING = False
+
+
+    def HandleAction( self, action ):
+        action = action.lower()
+        if action == 'brightnessup' and self.SCREENSTATE == 'On':
+            self.SCREEN.AdjustBrightness( direction='up' )
+            self.LW.log( ['turned brightness up'] )
+        elif action == 'brightnessdown' and self.SCREENSTATE == 'On':
+            self.SCREEN.AdjustBrightness( direction='down' )
+            self.LW.log( ['turned brightness down'] )
+        elif action.startswith( 'screenon' ):
+            sb = action.split( ':' )
+            try:
+                brightness = sb[1]
+            except IndexError:
+                brightness = self.STOREDBRIGHTNESS
+            self.SCREEN.SetBrightness( brightness=brightness )
+            self.SCREENSTATE = 'On'
+            self.LW.log( ['turned screen on to brightness of ' + str( brightness )] )
+            _send_json( self.WSC, self.LW, thetype='update', thedata='ScreenStatus:ScreenOn' )
+            if self.DIMRUN and self.BRIGHTRUN:
+                self.DARKRUN = False
+                self.DIMRUN = False
+                self.BRIGHTRUN = False
+        elif action == 'screenoff' and self.SCREENSTATE == 'On':
+            self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
+            self.SCREEN.SetBrightness( brightness=0 )
+            self.SCREENSTATE = 'Off'
+            self.LW.log( ['turned screen off and saved brightness as ' + str( self.STOREDBRIGHTNESS )] )
+            _send_json( self.WSC, self.LW, thetype='update', thedata='ScreenStatus:ScreenOff' )
+            if not self.DARKRUN:
+                self.DARKRUN = True
+                self.DIMRUN = True
+                self.BRIGHTRUN = True
+        elif action.startswith( 'brightness:' ):
+            try:
+                level = int( action.split(':')[1] )
+            except ValueError:
+                level = None
+            if level:
+                if  self.SCREENSTATE == 'On':
+                    self.SCREEN.SetBrightness( brightness=level )
+                    self.LW.log( ['set brightness to ' + str( level )] )
+                else:
+                    self.STOREDBRIGHTNESS = level
+                    self.LW.log( ['screen is off, so set stored brightness to ' + str( level )] )
+        elif action == 'getsunrisesunset':
+            self.SetSunriseSunset()
+        self._set_brightness_bar()
 
 
     def SetSunriseSunset( self, jsonresult=None ):
@@ -145,10 +194,15 @@ class ScreenControl:
             self._map_returned_settings( thedata )
         else:
             self._get_config_settings()
+        if not self.AUTODIM:
+            self.DARKRUN = False
+            self.BRIGHTRUN = False
+            self.DIMRUN = False
+            self.HandleAction( 'Brightness:' + str( self.FIXEDBRIGHTNESS ) )
 
 
     def _get_config_settings( self ):
-        self.FIXEDBRIGHTNESS = 0
+        self.FIXEDBRIGHTNESS = 100
         self.AUTODIM = config.Get( 'autodim' )
         self.DARKACTION = config.Get( 'specialtriggers' ).get( 'dark' )
         self.DIMACTION = config.Get( 'specialtriggers' ).get( 'dim' )
@@ -161,9 +215,9 @@ class ScreenControl:
     def _map_returned_settings( self, thedata ):
         self.FIXEDBRIGHTNESS = thedata.get( 'fixed_brightness' )
         self.AUTODIM = thedata.get( 'auto_dim', True )
-        self.DARKACTION = KODIACTIONMAP[thedata.get( 'dark_action', 0 )]
-        self.DIMACTION = KODIACTIONMAP[thedata.get( 'dim_action', 4 )]
-        self.BRIGHTACTION = KODIACTIONMAP[thedata.get( 'bright_action', 10 )]
+        self.DARKACTION = self.KODIACTIONMAP[thedata.get( 'dark_action', 0 )]
+        self.DIMACTION = self.KODIACTIONMAP[thedata.get( 'dim_action', 4 )]
+        self.BRIGHTACTION = self.KODIACTIONMAP[thedata.get( 'bright_action', 10 )]
         self.DARKTHRESHOLD = thedata.get( 'dark_threshold', 5 )
         self.BRIGHTTHRESHOLD = thedata.get( 'bright_threshold', 80 )
         self.TIMEDTRIGGERS = []
@@ -180,6 +234,7 @@ class ScreenControl:
                                      self.KODIACTIONMAP[thedata.get( 'timed_two_action', 11 )],
                                      self.KODIDAYMAP[thedata.get( 'timed_two_days', 0 )]] )
         self.TIMEDTRIGGERS.extend( config.Get( 'timedtriggers' ) )
+        print (self.TIMEDTRIGGERS )
 
 
     def _is_time( self, thetime, checkdays='' ):
@@ -206,59 +261,6 @@ class ScreenControl:
         except ValueError:
             fulldate = None
         return fulldate
-
-
-    def _handle_action( self, action ):
-        action = action.lower()
-        if action == 'brightnessup' and self.SCREENSTATE == 'On':
-            self.SCREEN.AdjustBrightness( direction='up' )
-            self.LW.log( ['turned brightness up'] )
-        elif action == 'brightnessdown' and self.SCREENSTATE == 'On':
-            self.SCREEN.AdjustBrightness( direction='down' )
-            self.LW.log( ['turned brightness down'] )
-        elif action == 'autodimon':
-            self.AUTODIM = True
-            self.LW.log( ['turned autodim on'] )
-        elif action == 'autodimoff':
-            self.AUTODIM = False
-            self.LW.log( ['turned autodim off'] )
-        elif action.startswith( 'screenon' ):
-            sb = action.split( ':' )
-            try:
-                brightness = sb[1]
-            except IndexError:
-                brightness = self.STOREDBRIGHTNESS
-            self.SCREEN.SetBrightness( brightness=brightness )
-            self.SCREENSTATE = 'On'
-            self.LW.log( ['turned screen on to brightness of ' + str( brightness )] )
-            if self.DIMRUN and self.BRIGHTRUN:
-                self.DARKRUN = False
-                self.DIMRUN = False
-                self.BRIGHTRUN = False
-        elif action == 'screenoff' and self.SCREENSTATE == 'On':
-            self.STOREDBRIGHTNESS = self.SCREEN.GetBrightness()
-            self.SCREEN.SetBrightness( brightness=0 )
-            self.SCREENSTATE = 'Off'
-            self.LW.log( ['turned screen off and saved brightness as ' + str( self.STOREDBRIGHTNESS )] )
-            if not self.DARKRUN:
-                self.DARKRUN = True
-                self.DIMRUN = True
-                self.BRIGHTRUN = True
-        elif action.startswith( 'brightness:' ):
-            try:
-                level = int( action.split(':')[1] )
-            except ValueError:
-                level = None
-            if level:
-                if  self.SCREENSTATE == 'On':
-                    self.SCREEN.SetBrightness( brightness=level )
-                    self.LW.log( ['set brightness to ' + str( level )] )
-                else:
-                    self.STOREDBRIGHTNESS = level
-                    self.LW.log( ['screen is off, so set stored brightness to ' + str( level )] )
-        elif action == 'getsunrisesunset':
-            self.SetSunriseSunset()
-        self._set_brightness_bar()
 
 
     def _set_brightness_bar( self ):
@@ -377,17 +379,27 @@ class Main:
         if not has_websockets:
             self.LW.log( ['websockets is not installed, exiting'], 'info' )
             return
-        self.SCREENCONTROL = ScreenControl( self.LW )
-        self.PASSSENSORDATA = PassSensorData( self.LW )
-        sc_thread = Thread( target=self.SCREENCONTROL.Start )
-        sc_thread.setDaemon( True )
-        sc_thread.start()
-        psd_thread = Thread( target=self.PASSSENSORDATA.Start )
-        psd_thread.setDaemon( True )
-        psd_thread.start()
-        self._websocket_client()
-        self.SCREENCONTROL.Stop()
-        self.PASSSENSORDATA.Stop()
+        should_quit = False
+        try:
+            while not should_quit:
+                self.SCREENCONTROL = ScreenControl( self.LW )
+                self.PASSSENSORDATA = PassSensorData( self.LW )
+                sc_thread = Thread( target=self.SCREENCONTROL.Start )
+                sc_thread.setDaemon( True )
+                sc_thread.start()
+                psd_thread = Thread( target=self.PASSSENSORDATA.Start )
+                psd_thread.setDaemon( True )
+                psd_thread.start()
+                self._websocket_client()
+                self.SCREENCONTROL.Stop()
+                self.PASSSENSORDATA.Stop()
+                del sc_thread
+                del psd_thread
+                self.SCREENCONTROL = None
+                self.PASSSENSORDATA = None
+                time.sleep( 30 )
+        except KeyboardInterrupt:
+            should_quit = True
         self.LW.log( ['script finished'], 'info' )
 
 
@@ -397,10 +409,14 @@ class Main:
             jm = json.loads( message )
             if jm.get( 'id' ) == '2':
                 self.SCREENCONTROL.SetSunriseSunset( jsonresult=jm.get( 'result' ) )
-            elif jm.get( 'method' ) == 'System.OnQuit' or jm.get( 'method' ) == 'Other.WSLite.Monitor.Stopping':
-                wsc.close()
             elif jm.get( 'method' ) == 'Other.ReturningSettings':
                 self.SCREENCONTROL.UpdateSettings( thedata=jm.get( 'params', {} ).get( 'data' ) )
+            elif jm.get( 'method' ) == 'Other.ScreenOn':
+                self.SCREENCONTROL.HandleAction( 'screenon' )
+            elif jm.get( 'method' ) == 'Other.ScreenOff':
+                self.SCREENCONTROL.HandleAction( 'screenoff' )
+            elif jm.get( 'method' ) == 'System.OnQuit':
+                wsc.close()
 
         def on_error( ws, error ):
             self.LW.log( ['error reading data from Kodi: ' + str( error )] )
