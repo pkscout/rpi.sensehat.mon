@@ -39,7 +39,7 @@ class AmbientSensor:
                 time.sleep( 0.1 )
             return  level/self.OVERSAMPLE + 1
         elif self.TESTMODE:
-            return random.randint( 0, 65000 )
+            return random.randint( 0, 100 )
         return None
 
 
@@ -68,5 +68,5 @@ class RPiCamera:
                 if reading:
                     return reading
         elif self.TESTMODE:
-            return random.randint( 0, 255 )
+            return random.randint( 0, 100 )
         return None
