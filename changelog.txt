@@ -1,3 +1,6 @@
+v.3.0.2
+- rewrote script to be more sane about dealing with Kodi quitting
+
 v.3.0.1
 - restructured script for best practice code layout
 
