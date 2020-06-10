@@ -234,7 +234,6 @@ class ScreenControl:
                                      self.KODIACTIONMAP[thedata.get( 'timed_two_action', 11 )],
                                      self.KODIDAYMAP[thedata.get( 'timed_two_days', 0 )]] )
         self.TIMEDTRIGGERS.extend( config.Get( 'timedtriggers' ) )
-        print (self.TIMEDTRIGGERS )
 
 
     def _is_time( self, thetime, checkdays='' ):
