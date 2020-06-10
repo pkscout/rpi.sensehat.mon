@@ -1,6 +1,6 @@
 
 import resources.config as config
-import calendar, json, os, time
+import calendar, json, os, signal, sys, time
 from datetime import datetime
 from threading import Thread
 from collections import deque
@@ -378,28 +378,32 @@ class Main:
         if not has_websockets:
             self.LW.log( ['websockets is not installed, exiting'], 'info' )
             return
-        should_quit = False
-        try:
-            while not should_quit:
-                self.SCREENCONTROL = ScreenControl( self.LW )
-                self.PASSSENSORDATA = PassSensorData( self.LW )
-                sc_thread = Thread( target=self.SCREENCONTROL.Start )
-                sc_thread.setDaemon( True )
-                sc_thread.start()
-                psd_thread = Thread( target=self.PASSSENSORDATA.Start )
-                psd_thread.setDaemon( True )
-                psd_thread.start()
-                self._websocket_client()
-                self.SCREENCONTROL.Stop()
-                self.PASSSENSORDATA.Stop()
-                del sc_thread
-                del psd_thread
-                self.SCREENCONTROL = None
-                self.PASSSENSORDATA = None
-                time.sleep( 30 )
-        except KeyboardInterrupt:
-            should_quit = True
+        signal.signal(signal.SIGINT, self.signal_handler)
+        while True:
+            self.SCREENCONTROL = ScreenControl( self.LW )
+            self.PASSSENSORDATA = PassSensorData( self.LW )
+            sc_thread = Thread( target=self.SCREENCONTROL.Start )
+            sc_thread.setDaemon( True )
+            sc_thread.start()
+            psd_thread = Thread( target=self.PASSSENSORDATA.Start )
+            psd_thread.setDaemon( True )
+            psd_thread.start()
+            self._websocket_client()
+            self.SCREENCONTROL.Stop()
+            self.PASSSENSORDATA.Stop()
+            del sc_thread
+            del psd_thread
+            self.SCREENCONTROL = None
+            self.PASSSENSORDATA = None
+            time.sleep( 30 )
         self.LW.log( ['script finished'], 'info' )
+
+
+    def signal_handler(self, sig, frame):
+        self.SCREENCONTROL.Stop()
+        self.PASSSENSORDATA.Stop()
+        self.LW.log( ['script finished'], 'info' )
+        sys.exit(0)
 
 
     def _websocket_client( self ):
@@ -418,7 +422,7 @@ class Main:
                 wsc.close()
 
         def on_error( ws, error ):
-            self.LW.log( ['error reading data from Kodi: ' + str( error )] )
+            pass
 
         def on_open( ws ):
             self.LW.log( ['opening websocket connection to Kodi'], 'info' )
