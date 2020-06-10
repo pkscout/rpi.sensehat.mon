@@ -1,3 +1,6 @@
+v.3.0.4
+- more error handling at quit
+
 v.3.0.3
 - better handling of SIGINT so service doesn't have to kill the process
 
