@@ -393,8 +393,8 @@ class Main:
 
     def __init__( self, thepath ):
         self.LW = Logger( logfile=os.path.join( os.path.dirname( thepath ), 'data', 'logs', 'logfile.log' ),
-                          numbackups = config.Get( 'logbackups' ), logdebug = str( config.Get( 'debug' ) ) )
-        self.LW.log( ['script started' ], 'info' )
+                          numbackups=config.Get( 'logbackups' ), logdebug=config.Get( 'debug' ) )
+        self.LW.log( ['script started, debug set to %s' % str( config.Get( 'debug' ))], 'info' )
         if not has_websockets:
             self.LW.log( ['websockets is not installed, exiting'], 'info' )
             return
