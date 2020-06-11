@@ -401,6 +401,7 @@ class Main:
         self.KODIURL = 'ws://%s:%s/jsponrpc' % (config.Get( 'kodiuri' ), config.Get( 'kodiwsport' ) )
         signal.signal( signal.SIGINT, self.signal_handler )
         while True:
+            self.KODICONN = True
             self.SCREENCONTROL = ScreenControl( self.LW )
             self.PASSSENSORDATA = PassSensorData( self.LW )
             sc_thread = Thread( target=self.SCREENCONTROL.Start )
@@ -410,13 +411,15 @@ class Main:
             psd_thread.setDaemon( True )
             psd_thread.start()
             self._websocket_client()
+            self.LW.log( ['connection to Kodi was closed, will try and reestablish connection in 1 minute'], 'info' )
+            self.KODICONN = False
             self.SCREENCONTROL.Stop()
             self.PASSSENSORDATA.Stop()
             del sc_thread
             del psd_thread
             self.SCREENCONTROL = None
             self.PASSSENSORDATA = None
-            time.sleep( 30 )
+            time.sleep( 60 )
 
 
     def signal_handler(self, sig, frame):
@@ -425,9 +428,10 @@ class Main:
             self.PASSSENSORDATA.Stop()
         except AttributeError:
             self.LW.log( ['threads not running, so no need to stop them'] )
-        ws = websocket.create_connection( self.KODIURL )
-        _send_json( ws, self.LW, thetype = 'update', thedata = 'IndoorTemp:None;IndoorHumidity:None;IndoorPressure:None;PressureTrend:None' )
-        ws.close()
+        if self.KODICONN:
+            ws = websocket.create_connection( self.KODIURL )
+            _send_json( ws, self.LW, thetype = 'update', thedata = 'IndoorTemp:None;IndoorHumidity:None;IndoorPressure:None;PressureTrend:None' )
+            ws.close()
         self.LW.log( ['script finished'], 'info' )
         sys.exit(0)
 
