@@ -1,6 +1,6 @@
 
 import resources.config as config
-import calendar, json, os, signal, sys, time
+import calendar, json, os, signal, sys, time, traceback
 from datetime import datetime
 from threading import Thread
 from collections import deque
@@ -60,60 +60,63 @@ class ScreenControl:
 
     def Start( self ):
         self.LW.log( ['starting up ScreenControl thread'], 'info' )
-        while self.KEEPRUNNING:
-            if self.AUTODIM:
-                self.LW.log( ['checking autodim'] )
-                lightlevel = self.CAMERA.LightLevel()
-                self.LW.log( ['got back %s from light sensor' % str( lightlevel )] )
-                css = self.SCREENSTATE
-                do_dark = False
-                do_bright = False
-                do_dim = False
-                if lightlevel:
-                    if lightlevel <= self.DARKTHRESHOLD:
-                        do_dark = True
-                    elif lightlevel <= self.BRIGHTTHRESHOLD:
-                        do_dim = True
+        try:
+            while self.KEEPRUNNING:
+                if self.AUTODIM:
+                    self.LW.log( ['checking autodim'] )
+                    lightlevel = self.CAMERA.LightLevel()
+                    self.LW.log( ['got back %s from light sensor' % str( lightlevel )] )
+                    css = self.SCREENSTATE
+                    do_dark = False
+                    do_bright = False
+                    do_dim = False
+                    if lightlevel:
+                        if lightlevel <= self.DARKTHRESHOLD:
+                            do_dark = True
+                        elif lightlevel <= self.BRIGHTTHRESHOLD:
+                            do_dim = True
+                        else:
+                            do_bright = True
+                    if do_dark and not self.DARKRUN:
+                        self.LW.log( ['dark trigger activated with ' + self.DARKACTION] )
+                        self.HandleAction( self.DARKACTION )
+                        self.DARKRUN = True
+                        self.BRIGHTRUN = False
+                        self.DIMRUN = False
+                    elif do_bright and not self.BRIGHTRUN:
+                        self.LW.log( ['bright trigger activated with ' + self.BRIGHTACTION] )
+                        self.HandleAction( self.BRIGHTACTION )
+                        self.DARKRUN = False
+                        self.BRIGHTRUN = True
+                        self.DIMRUN = False
+                    elif do_dim and not self.DIMRUN:
+                        self.LW.log( ['dim trigger activated with ' + self.DIMACTION] )
+                        self.HandleAction( self.DIMACTION )
+                        self.DARKRUN = False
+                        self.BRIGHTRUN = False
+                        self.DIMRUN = True
+                    if self._is_time( config.Get( 'fetchsuntime' ) ):
+                        self.LW.log( ['getting updated sunrise and sunset times'] )
+                        self.HandleAction( 'GetSunriseSunset' )
                     else:
-                        do_bright = True
-                if do_dark and not self.DARKRUN:
-                    self.LW.log( ['dark trigger activated with ' + self.DARKACTION] )
-                    self.HandleAction( self.DARKACTION )
-                    self.DARKRUN = True
-                    self.BRIGHTRUN = False
-                    self.DIMRUN = False
-                elif do_bright and not self.BRIGHTRUN:
-                    self.LW.log( ['bright trigger activated with ' + self.BRIGHTACTION] )
-                    self.HandleAction( self.BRIGHTACTION )
-                    self.DARKRUN = False
-                    self.BRIGHTRUN = True
-                    self.DIMRUN = False
-                elif do_dim and not self.DIMRUN:
-                    self.LW.log( ['dim trigger activated with ' + self.DIMACTION] )
-                    self.HandleAction( self.DIMACTION )
-                    self.DARKRUN = False
-                    self.BRIGHTRUN = False
-                    self.DIMRUN = True
-                if self._is_time( config.Get( 'fetchsuntime' ) ):
-                    self.LW.log( ['getting updated sunrise and sunset times'] )
-                    self.HandleAction( 'GetSunriseSunset' )
-                else:
-                    triggers = self.TIMEDTRIGGERS
-                    for onetrigger in triggers:
-                        if onetrigger[0].lower() == 'sunrise':
-                            onetrigger[0] = self.SUNRISE
-                        if onetrigger[0].lower() == 'sunset':
-                            onetrigger[0] = self.SUNSET
-                        try:
-                            checkdays = onetrigger[2]
-                        except IndexError:
-                            checkdays = ''
-                        if self._is_time( onetrigger[0], checkdays=checkdays ):
-                            self.LW.log( ['timed trigger %s activated with %s' % (onetrigger[0], onetrigger[1])] )
-                            self.HandleAction( onetrigger[1] )
-                if css != self.SCREENSTATE:
-                    _send_json( self.WSC, self.LW, thetype='update', thedata='ScreenStatus:' + self.SCREENSTATE )
-            time.sleep( self.WAITTIME )
+                        triggers = self.TIMEDTRIGGERS
+                        for onetrigger in triggers:
+                            if onetrigger[0].lower() == 'sunrise':
+                                onetrigger[0] = self.SUNRISE
+                            if onetrigger[0].lower() == 'sunset':
+                                onetrigger[0] = self.SUNSET
+                            try:
+                                checkdays = onetrigger[2]
+                            except IndexError:
+                                checkdays = ''
+                            if self._is_time( onetrigger[0], checkdays=checkdays ):
+                                self.LW.log( ['timed trigger %s activated with %s' % (onetrigger[0], onetrigger[1])] )
+                                self.HandleAction( onetrigger[1] )
+                    if css != self.SCREENSTATE:
+                        _send_json( self.WSC, self.LW, thetype='update', thedata='ScreenStatus:' + self.SCREENSTATE )
+                time.sleep( self.WAITTIME )
+        except Exception as e:
+            print( traceback.format_exc() )
 
 
     def Stop( self ):
@@ -311,28 +314,31 @@ class PassSensorData:
 
     def Start( self ):
         self.LW.log( ['starting up PassSensorData thread'], 'info' )
-        while self.KEEPRUNNING:
-            temperature = self.SENSOR.Temperature()
-            humidity = self.SENSOR.Humidity()
-            pressure = self.SENSOR.Pressure()
-            pressuretrend = self.SENSOR.PressureTrend()
-            s_data = []
-            s_data.append( 'IndoorTemp:' + str( temperature ) )
-            s_data.append( 'IndoorHumidity:' + str( humidity ) )
-            s_data.append( 'IndoorPressure:' + str( pressure ) )
-            if pressuretrend:
-                s_data.append( 'PressureTrend:' + pressuretrend )
-            else:
-                s_data.append( 'PressureTrend:' + self._get_pressure_trend( pressure ) )
-            d_str = ''
-            for item in s_data:
-                d_str = '%s;%s' % (d_str, item)
-            d_str = d_str[1:]
-            self.LW.log( ['sensor data: ' + d_str] )
-            self.LED.Sweep( anchor=7, start=1, color=self.LEDCOLOR )
-            self.LED.PixelOn( 1, 7, self.LEDCOLOR )
-            _send_json( self.WSC, self.LW, thetype='update', thedata=d_str )
-            time.sleep( self.READINGDELTA )
+        try:
+            while self.KEEPRUNNING:
+                temperature = self.SENSOR.Temperature()
+                humidity = self.SENSOR.Humidity()
+                pressure = self.SENSOR.Pressure()
+                pressuretrend = self.SENSOR.PressureTrend()
+                s_data = []
+                s_data.append( 'IndoorTemp:' + str( temperature ) )
+                s_data.append( 'IndoorHumidity:' + str( humidity ) )
+                s_data.append( 'IndoorPressure:' + str( pressure ) )
+                if pressuretrend:
+                    s_data.append( 'PressureTrend:' + pressuretrend )
+                else:
+                    s_data.append( 'PressureTrend:' + self._get_pressure_trend( pressure ) )
+                d_str = ''
+                for item in s_data:
+                    d_str = '%s;%s' % (d_str, item)
+                d_str = d_str[1:]
+                self.LW.log( ['sensor data: ' + d_str] )
+                self.LED.Sweep( anchor=7, start=1, color=self.LEDCOLOR )
+                self.LED.PixelOn( 1, 7, self.LEDCOLOR )
+                _send_json( self.WSC, self.LW, thetype='update', thedata=d_str )
+                time.sleep( self.READINGDELTA )
+        except Exception as e:
+            print( traceback.format_exc() )
 
 
     def Stop( self ):
@@ -392,7 +398,8 @@ class Main:
         if not has_websockets:
             self.LW.log( ['websockets is not installed, exiting'], 'info' )
             return
-        signal.signal(signal.SIGINT, self.signal_handler)
+        self.KODIURL = 'ws://%s:%s/jsponrpc' % (config.Get( 'kodiuri' ), config.Get( 'kodiwsport' ) )
+        signal.signal( signal.SIGINT, self.signal_handler )
         while True:
             self.SCREENCONTROL = ScreenControl( self.LW )
             self.PASSSENSORDATA = PassSensorData( self.LW )
@@ -418,6 +425,9 @@ class Main:
             self.PASSSENSORDATA.Stop()
         except AttributeError:
             self.LW.log( ['threads not running, so no need to stop them'] )
+        ws = websocket.create_connection( self.KODIURL )
+        _send_json( ws, self.LW, thetype = 'update', thedata = 'IndoorTemp:None;IndoorHumidity:None;IndoorPressure:None;PressureTrend:None' )
+        ws.close()
         self.LW.log( ['script finished'], 'info' )
         sys.exit(0)
 
@@ -452,7 +462,6 @@ class Main:
         def on_close( ws ):
             self.LW.log( ['closing websocket connection to Kodi'], 'info' )
 
-        wsc = websocket.WebSocketApp( 'ws://%s:%s/jsponrpc' % (config.Get( 'kodiuri' ), config.Get( 'kodiwsport' ) ),
-                                      on_message=on_message, on_error=on_error, on_close=on_close )
+        wsc = websocket.WebSocketApp( self.KODIURL, on_message=on_message, on_error=on_error, on_close=on_close )
         wsc.on_open = on_open
         wsc.run_forever()
