@@ -1,6 +1,7 @@
 v.3.1.2
 - fix for debug logging always being enabled
 - better exit handling if Kodi isn't running
+- added exception errors to log
 
 v.3.1.1
 - added printing of any exception in a thread to assist with debugging

@@ -116,6 +116,7 @@ class ScreenControl:
                         _send_json( self.WSC, self.LW, thetype='update', thedata='ScreenStatus:' + self.SCREENSTATE )
                 time.sleep( self.WAITTIME )
         except Exception as e:
+            self.LW.log( [traceback.format_exc()], 'error' )
             print( traceback.format_exc() )
 
 
@@ -338,6 +339,7 @@ class PassSensorData:
                 _send_json( self.WSC, self.LW, thetype='update', thedata=d_str )
                 time.sleep( self.READINGDELTA )
         except Exception as e:
+            self.LW.log( [traceback.format_exc()], 'error' )
             print( traceback.format_exc() )
 
 
@@ -392,34 +394,38 @@ class PassSensorData:
 class Main:
 
     def __init__( self, thepath ):
-        self.LW = Logger( logfile=os.path.join( os.path.dirname( thepath ), 'data', 'logs', 'logfile.log' ),
-                          numbackups=config.Get( 'logbackups' ), logdebug=config.Get( 'debug' ) )
-        self.LW.log( ['script started, debug set to %s' % str( config.Get( 'debug' ))], 'info' )
-        if not has_websockets:
-            self.LW.log( ['websockets is not installed, exiting'], 'info' )
-            return
-        self.KODIURL = 'ws://%s:%s/jsponrpc' % (config.Get( 'kodiuri' ), config.Get( 'kodiwsport' ) )
-        signal.signal( signal.SIGINT, self.signal_handler )
-        while True:
-            self.KODICONN = True
-            self.SCREENCONTROL = ScreenControl( self.LW )
-            self.PASSSENSORDATA = PassSensorData( self.LW )
-            sc_thread = Thread( target=self.SCREENCONTROL.Start )
-            sc_thread.setDaemon( True )
-            sc_thread.start()
-            psd_thread = Thread( target=self.PASSSENSORDATA.Start )
-            psd_thread.setDaemon( True )
-            psd_thread.start()
-            self._websocket_client()
-            self.LW.log( ['connection to Kodi was closed, will try and reestablish connection in 1 minute'], 'info' )
-            self.KODICONN = False
-            self.SCREENCONTROL.Stop()
-            self.PASSSENSORDATA.Stop()
-            del sc_thread
-            del psd_thread
-            self.SCREENCONTROL = None
-            self.PASSSENSORDATA = None
-            time.sleep( 60 )
+        try:
+            self.LW = Logger( logfile=os.path.join( os.path.dirname( thepath ), 'data', 'logs', 'logfile.log' ),
+                              numbackups=config.Get( 'logbackups' ), logdebug=config.Get( 'debug' ) )
+            self.LW.log( ['script started, debug set to %s' % str( config.Get( 'debug' ))], 'info' )
+            if not has_websockets:
+                self.LW.log( ['websockets is not installed, exiting'], 'info' )
+                return
+            self.KODIURL = 'ws://%s:%s/jsponrpc' % (config.Get( 'kodiuri' ), config.Get( 'kodiwsport' ) )
+            signal.signal( signal.SIGINT, self.signal_handler )
+            while True:
+                self.KODICONN = True
+                self.SCREENCONTROL = ScreenControl( self.LW )
+                self.PASSSENSORDATA = PassSensorData( self.LW )
+                sc_thread = Thread( target=self.SCREENCONTROL.Start )
+                sc_thread.setDaemon( True )
+                sc_thread.start()
+                psd_thread = Thread( target=self.PASSSENSORDATA.Start )
+                psd_thread.setDaemon( True )
+                psd_thread.start()
+                self._websocket_client()
+                self.LW.log( ['connection to Kodi was closed, will try and reestablish connection in 1 minute'], 'info' )
+                self.KODICONN = False
+                self.SCREENCONTROL.Stop()
+                self.PASSSENSORDATA.Stop()
+                del sc_thread
+                del psd_thread
+                self.SCREENCONTROL = None
+                self.PASSSENSORDATA = None
+                time.sleep( 60 )
+        except Exception as e:
+            self.LW.log( [traceback.format_exc()], 'error' )
+            print( traceback.format_exc() )
 
 
     def signal_handler(self, sig, frame):
