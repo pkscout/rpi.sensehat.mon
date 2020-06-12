@@ -219,7 +219,7 @@ class ScreenControl:
 
 
     def _map_returned_settings( self, thedata ):
-        self.WHICHCAMERA = self.KODICAMERAMAP[thedata.get( 'which_camera', 0 )]    
+        self.WHICHCAMERA = self.KODICAMERAMAP[thedata.get( 'which_camera', 0 )]
         self.FIXEDBRIGHTNESS = thedata.get( 'fixed_brightness' )
         self.AUTODIM = thedata.get( 'auto_dim', True )
         self.DARKACTION = self.KODIACTIONMAP[thedata.get( 'dark_action', 0 )]
