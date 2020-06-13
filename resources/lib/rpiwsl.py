@@ -36,9 +36,7 @@ def _send_json( wsc, lw, thetype, thedata ):
 class ScreenControl:
 
     def __init__( self, lw ):
-        self.KODIACTIONMAP = ['ScreenOff', 'ScreenOn:10', 'ScreenOn:20', 'ScreenOn:30', 'ScreenOn:40',
-                              'ScreenOn:50', 'ScreenOn:60', 'ScreenOn:70', 'ScreenOn:80', 'ScreenOn:90',
-                              'ScreenOn:100', 'None']
+        self.KODIACTIONMAP = ['None', 'ScreenOff', 'ScreenOn']
         self.KODIDAYMAP    = ['', 'Weekdays', 'Weekend']
         self.KODICAMERAMAP = ['Ambient', 'Pi']
         self.LW = lw
@@ -203,12 +201,12 @@ class ScreenControl:
             self.DARKRUN = False
             self.BRIGHTRUN = False
             self.DIMRUN = False
-            self.HandleAction( 'Brightness:' + str( self.FIXEDBRIGHTNESS ) )
+            self.HandleAction( self.FIXEDBRIGHTNESS )
 
 
     def _get_config_settings( self ):
         self.WHICHCAMERA = config.Get( 'which_camera' )
-        self.FIXEDBRIGHTNESS = 100
+        self.FIXEDBRIGHTNESS = 'Brightness:100'
         self.AUTODIM = config.Get( 'autodim' )
         self.DARKACTION = config.Get( 'specialtriggers' ).get( 'dark' )
         self.DIMACTION = config.Get( 'specialtriggers' ).get( 'dim' )
@@ -220,27 +218,34 @@ class ScreenControl:
 
     def _map_returned_settings( self, thedata ):
         self.WHICHCAMERA = self.KODICAMERAMAP[thedata.get( 'which_camera', 0 )]
-        self.FIXEDBRIGHTNESS = thedata.get( 'fixed_brightness' )
-        self.AUTODIM = thedata.get( 'auto_dim', True )
-        self.DARKACTION = self.KODIACTIONMAP[thedata.get( 'dark_action', 0 )]
-        self.DIMACTION = self.KODIACTIONMAP[thedata.get( 'dim_action', 4 )]
-        self.BRIGHTACTION = self.KODIACTIONMAP[thedata.get( 'bright_action', 10 )]
+        self.FIXEDBRIGHTNESS = 'Brightness:' + thedata.get( 'fixed_brightness', '100' )
         self.DARKTHRESHOLD = thedata.get( 'dark_threshold', 5 )
         self.BRIGHTTHRESHOLD = thedata.get( 'bright_threshold', 80 )
+        self.AUTODIM = thedata.get( 'auto_dim', True )
+        self.DARKACTION = self._determine_action( thedata.get( 'dark_action', 0 ), thedata.get( 'dark_level', '10' ) )
+        self.DIMACTION = self._determine_action( thedata.get( 'dim_action', 0 ), thedata.get( 'dim_level', '40' ) )
+        self.BRIGHTACTION = self._determine_action( thedata.get( 'bright_action', 0 ), thedata.get( 'bright_level', '100' ) )
         self.TIMEDTRIGGERS = []
         self.TIMEDTRIGGERS.append( ['sunrise',
-                                     self.KODIACTIONMAP[thedata.get( 'sunrise_action', 11 )],
+                                     self._determine_action( thedata.get( 'sunrise_action', 0 ), thedata.get( 'sunrise_level', '100' ) ),
                                      self.KODIDAYMAP[thedata.get( 'sunrise_days', 0 )]] )
         self.TIMEDTRIGGERS.append( ['sunset',
-                                     self.KODIACTIONMAP[thedata.get( 'sunset_action', 11 )],
+                                     self._determine_action( thedata.get( 'sunset_action', 0 ), thedata.get( 'sunset_level', '50' ) ),
                                      self.KODIDAYMAP[thedata.get( 'sunset_days', 0 )]] )
-        self.TIMEDTRIGGERS.append( [ thedata.get( 'timed_one', '00:00' ),
-                                     self.KODIACTIONMAP[thedata.get( 'timed_one_action', 11 )],
-                                     self.KODIDAYMAP[thedata.get( 'timed_one_days', 0 )]] )
-        self.TIMEDTRIGGERS.append( [ thedata.get( 'timed_two', '00:00' ),
-                                     self.KODIACTIONMAP[thedata.get( 'timed_two_action', 11 )],
-                                     self.KODIDAYMAP[thedata.get( 'timed_two_days', 0 )]] )
+        self.TIMEDTRIGGERS.append( [ thedata.get( 'timer_one_time', '00:00' ),
+                                     self._determine_action( thedata.get( 'timer_one_action', 0 ), thedata.get( 'timer_one_level', '100' ) ),
+                                     self.KODIDAYMAP[thedata.get( 'timer_one_days', 0 )]] )
+        self.TIMEDTRIGGERS.append( [ thedata.get( 'timer_two_time', '00:00' ),
+                                     self._determine_action( thedata.get( 'timer_two_action', 0 ), thedata.get( 'timer_two_level', '100' ) ),
+                                     self.KODIDAYMAP[thedata.get( 'timer_two_days', 0 )]] )
         self.TIMEDTRIGGERS.extend( config.Get( 'timedtriggers' ) )
+
+
+    def _determine_action( self, action, level ):
+        if action == 2:
+            return '%s:%s' % (self.KODIACTIONMAP[action], level)
+        else:
+            return self.KODIACTIONMAP[action]
 
 
     def _is_time( self, thetime, checkdays='' ):
