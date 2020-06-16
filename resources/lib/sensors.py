@@ -6,14 +6,16 @@
 import datetime, random, subprocess
 try:
     from sense_hat import SenseHat
+    has_sensehat = True
 except ImportError:
-    pass
+    has_sensehat = False
 try:
     import smbus2, bme280
+    has_smbus = True
 except ImportError:
-    pass
-    
-    
+    has_smbus = False
+
+
 class BME280Sensors:
     def __init__( self, port=1, address=0x76, sampling=4, adjust=-1, testmode=False ):
         self.TESTMODE = testmode
@@ -21,40 +23,43 @@ class BME280Sensors:
         self.SAMPLING = sampling
         self.ADJUST = adjust
         self.DATA = None
-        try:
+        if has_smbus:
             self.BUS = smbus2.SMBus( port )
             bme280.load_calibration_params( self.BUS, self.ADDRESS )
-        except (OSError, NameError, TypeError) as error:
+        else:
             self.BUS = None
-    
-    
+
+
     def Humidity( self ):
         if self.BUS:
             self._get_data()
             return self.DATA.humidity
-        elif self.TESTMODE:        
+        elif self.TESTMODE:
             return random.randint( 43, 68 )
         return None
 
-    
+
     def Temperature( self ):
         if self.BUS:
             self._get_data()
             return self.DATA.temperature + self.ADJUST
-        elif self.TESTMODE:        
+        elif self.TESTMODE:
             return random.randint( 21, 28 )
         return None
-    
-    
+
+
     def Pressure( self ):
         if self.BUS:
             self._get_data()
             return self.DATA.pressure
-        elif self.TESTMODE:        
+        elif self.TESTMODE:
             return random.randint( 990, 1020 )
         return None
 
-    
+    def PressureTrend( self ):
+        return None
+
+
     def _get_data( self ):
         if not self.DATA:
             self._sample()
@@ -74,23 +79,23 @@ class SenseHatSensors:
         self.ADJUST = adjust
         self.FACTOR = factor
         self.TESTMODE = testmode
-        try:
+        if has_sensehat:
             self.SENSE = SenseHat()
-        except (OSError, NameError) as error:
+        else:
             self.SENSE = None
 
-    
+
     def Humidity( self ):
         if self.SENSE:
             for i in range( 0, 5 ):
                 reading = self.SENSE.get_humidity()
                 if reading:
                     return reading
-        elif self.TESTMODE:        
+        elif self.TESTMODE:
             return random.randint( 43, 68 )
         return None
 
-        
+
     def Temperature( self ):
         if self.SENSE:
             for i in range( 0, 5 ):
@@ -107,23 +112,20 @@ class SenseHatSensors:
                         return int( round( reading - ((cpu_temp - reading)/self.FACTOR), 0 ) )
                     else:
                         return reading
-        elif self.TESTMODE:        
+        elif self.TESTMODE:
             return random.randint( 21, 28 )
         return None
 
-        
+
     def Pressure( self ):
         if self.SENSE:
             for i in range( 0, 5 ):
                 reading = self.SENSE.get_pressure()
                 if reading:
                     return reading
-        elif self.TESTMODE:        
+        elif self.TESTMODE:
             return random.randint( 990, 1020 )
         return None
 
-        
-            
-    
-    
-    
+    def PressureTrend( self ):
+        return None

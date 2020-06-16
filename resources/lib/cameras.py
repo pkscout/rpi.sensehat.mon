@@ -7,12 +7,14 @@ import time
 try:
     import random, picamera, picamera.array
     import numpy as np
+    has_camera = True
 except ImportError:
-    pass
+    has_camera = False
 try:
     import smbus2
+    has_smbus = True
 except ImportError:
-    pass
+    has_smbus = False
 
 
 
@@ -22,12 +24,12 @@ class AmbientSensor:
         self.CMD = cmd
         self.OVERSAMPLE = int( oversample )
         self.TESTMODE = testmode
-        try:
+        if has_smbus:
             self.BUS = smbus2.SMBus( port )
-        except (OSError, NameError) as error:
+        else:
             self.BUS = None
 
-    
+
     def LightLevel( self ):
         if self.BUS:
             level = 0
@@ -37,7 +39,7 @@ class AmbientSensor:
                 time.sleep( 0.1 )
             return  level/self.OVERSAMPLE + 1
         elif self.TESTMODE:
-            return random.randint( 0, 65000 )
+            return random.randint( 0, 100 )
         return None
 
 
@@ -45,19 +47,15 @@ class AmbientSensor:
         return ((data[1] + (256 * data[0])) / 1.2)
 
 
-   
+
 class RPiCamera:
     def __init__( self, useled=False, testmode=False ):
         self.TESTMODE = testmode
         self.USELED = useled
-        try:
-            picamera
-            self.CAMERA = True
-        except NameError:
-            self.CAMERA = False
-    
+
+
     def LightLevel( self ):
-        if self.CAMERA:
+        if has_camera:
             for i in range( 0, 5 ):
                 with picamera.PiCamera() as camera:
                     camera.resolution = (128, 80)
@@ -70,6 +68,5 @@ class RPiCamera:
                 if reading:
                     return reading
         elif self.TESTMODE:
-            return random.randint( 0, 255 )
+            return random.randint( 0, 100 )
         return None
-
