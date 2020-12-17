@@ -60,3 +60,4 @@ sudo systemctl stop rpiwsl.service
 sudo systemctl start rpiwsl.service 
 
 You can change settings by editing the settings.py file any time you'd like.  The script will reload the settings automatically.  No need to stop/start the script (unless otherwise noted in the settings file).
+Codacy Badge
