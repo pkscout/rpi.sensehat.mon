@@ -60,3 +60,6 @@ sudo systemctl stop rpiwsl.service
 sudo systemctl start rpiwsl.service 
 
 You can change settings by editing the settings.py file any time you'd like.  The script will reload the settings automatically.  No need to stop/start the script (unless otherwise noted in the settings file).
+
+
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/9867e6c74aed44ff873ffa9d7fe4d116)](https://www.codacy.com/gh/I-Cat/rpi.weatherstation.lite/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=I-Cat/rpi.weatherstation.lite&amp;utm_campaign=Badge_Grade)
