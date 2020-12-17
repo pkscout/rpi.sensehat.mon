@@ -49,7 +49,7 @@ To exit: CNTL-C
 
 Running from the terminal is useful during initial testing, but once you know it's working the way you want, you should set it to autostart.  To do that you need to copy rpiwsl.service.txt to the systemd directory, change the permissions, and configure systemd.
 From a terminal window:
-sudo cp /home/pi/rpi.weatherstation.lite/rpiwsl.service.txt /lib/systemd/system/rpiwsl.service
+sudo cp -R /home/pi/rpi.weatherstation.lite/rpiwsl.service.txt /lib/systemd/system/rpiwsl.service
 sudo chmod 644 /lib/systemd/system/rpiwsl.service
 sudo systemctl daemon-reload
 sudo systemctl enable rpiwsl.service
@@ -60,6 +60,5 @@ sudo systemctl stop rpiwsl.service
 sudo systemctl start rpiwsl.service 
 
 You can change settings by editing the settings.py file any time you'd like.  The script will reload the settings automatically.  No need to stop/start the script (unless otherwise noted in the settings file).
-
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/9867e6c74aed44ff873ffa9d7fe4d116)](https://www.codacy.com/gh/I-Cat/rpi.weatherstation.lite/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=I-Cat/rpi.weatherstation.lite&amp;utm_campaign=Badge_Grade)
