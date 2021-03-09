@@ -66,10 +66,13 @@ class RPiTouchscreen:
 class SenseHatLED:
     def __init__( self, low_light=True, rotate=False ):
         if has_sensehat:
-            self.SENSE = SenseHat()
-            self.SENSE.low_light = low_light
-            if rotate:
-                self.SENSE.set_rotation( 180 )
+            try:
+                self.SENSE = SenseHat()
+                self.SENSE.low_light = low_light
+                if rotate:
+                    self.SENSE.set_rotation( 180 )
+            except OSError:
+                self.SENSE = None
         else:
             self.SENSE = None
         self.PALETTE = {'green':(0, 255, 0), 'yellow':(255, 255, 0), 'blue':(0, 0, 255),
