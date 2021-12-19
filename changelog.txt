@@ -1,3 +1,6 @@
+v.3.2.1
+- updates for Bullseye
+
 v.3.2.0
 - made light level settings for actions more granular
 
