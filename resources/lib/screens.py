@@ -22,7 +22,7 @@ class RPiTouchscreen:
         self.BDIRECTION = 1
         self.TESTMODE = testmode
         if has_backlight:
-            self.BACKLIGHT = Backlight()
+            self.BACKLIGHT = Backlight("/sys/class/backlight/10-0045")
             self.CURRENTBRIGHTNESS = self.BACKLIGHT.brightness
             self.TOUCHSCREEN = True
         else:
